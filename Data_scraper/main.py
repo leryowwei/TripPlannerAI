@@ -1,1 +1,0 @@
-""" main code to execute data scraper """
