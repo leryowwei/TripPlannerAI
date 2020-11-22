@@ -14,7 +14,7 @@ from user import User
 from search_google import define_googlequery, request_urls
 from scrape_web import scrape_page
 from data_cleaning import clean_data
-from utils import write_output_pickle, write_output_csv
+from utils import write_output_pickle, write_output_csv, get_gsheet, read_cell, write_cell
 
 def main(api_type):
     """ Main function for data scraping tool 
@@ -31,14 +31,21 @@ def main(api_type):
     # Initialisation
     start = datetime.now()
     
-    # get path for NLP folder
+    # set up relevant paths
     parent_path = os.path.abspath('..')
     nlp_folder_path = os.path.join(parent_path, 'NLP_ML', 'nlp_loc_model')
     webdriver_path = os.path.join(parent_path, 'Miscellaneous', 'chromedriver_win32', 'chromedriver.exe')
+    misc_path = os.path.join(parent_path, 'Miscellaneous')
     
     # setup user class
     user_class = User(constants.DEFAULT_USER)
-    
+
+    # set up google sheet for API counter
+    print ("Getting google sheet....")
+    gsheet = get_gsheet(misc_path)
+    gsheet = write_cell(gsheet, api_type, 'COUNT', 2)
+    print (read_cell(gsheet, api_type, 'DATE'))
+
     # setup webdriver
     # Create a new instance of the driver
     print ('Setting up webdriver...')
@@ -56,6 +63,7 @@ def main(api_type):
     except:
         raise ValueError ("NLP LOC model not found. Please check if the trained model is in {}.".format(nlp_folder_path) + 
                           "Otherwise, please run the script /NLP_ML/train_entity.py.")
+
     
     # form keywords to search google based on user's input
     print ('Processing user input to form query list...')
@@ -75,7 +83,7 @@ def main(api_type):
     print('Data cleaning...')
     location_data = {}     
     for sitename in websites_data:
-        location_data = clean_data(websites_data[sitename], location_data, user_class, nlp_loc, driver)
+        location_data = clean_data(websites_data[sitename], location_data, user_class, nlp_loc, driver, api_type)
 
     # write data - CSV and pickle
     print ('Writing data...')

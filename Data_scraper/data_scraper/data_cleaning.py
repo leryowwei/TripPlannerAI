@@ -1,5 +1,8 @@
 
-def clean_data(results, location_data, user_class, nlp_loc, driver):
+from check_location import check_location_google, check_location_foursquare_detail, check_location_foursquare
+from check_location import check_location_here
+
+def clean_data(results, location_data, user_class, nlp_loc, driver, api_type):
     """ Filter through the keys of the dictionary to extract valid locations and
         information about the location (i.e. ratings) 
     
