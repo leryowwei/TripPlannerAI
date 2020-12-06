@@ -1,2 +1,3 @@
 NLP_ML/nlp_loc_model
 NLP_ML/nlp_multilabel_model
+*.pyc 

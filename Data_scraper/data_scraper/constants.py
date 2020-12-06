@@ -3,10 +3,16 @@
 """
 
 # API info
+# API key
 google_api_key = 'AIzaSyBMgMsYBSsb7wURHiA6HoQsj1fpQbT9lk8'
 foursquare_client_id = 'JV4HQCSP0QY100C1MICQCI5C3XHOVKZSWX1G5IRNSJAZMQFB'
 foursquare_client_secret = 'TXWM5UUJPFIFF1J0WML5VDCOEOSZFI2D1PDSTF0LBAGMH3BQ'
 here_api_key = 'cYa8I0YLChdxJLX4CffPUM7hfdGqKMegp1dN4mdQ0wc'
+# API limit
+google_limit = 2000 # monthly
+foursquare_limit = 99500 # monthly
+foursquare_detail_limit = 500 # daily
+here_limit = 250000 # monthly
 
 # GOOGLE SHEET INFO
 # GOOGLE SHEET HERE: https://docs.google.com/spreadsheets/d/1YzKpOIucoUpPXohoF_OjQrKm1Zyas0pVOpgLjqHTcpY/edit#gid=0
