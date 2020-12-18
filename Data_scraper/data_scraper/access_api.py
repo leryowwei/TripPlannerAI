@@ -6,15 +6,15 @@
     APIs available are:
         (1) Google API [NO LONGER USED]
         (2) Foursquare detail API - Premium endpoint and limited to 500 pulls per day
-        (3) Foursquare API - 90,000 per day but limited info
+        (3) Foursquare API - 99,500 per day but limited info
         (4) Here API - 250K per month
 
 """
 import requests
 import json
 import herepy
-import constants
-from utils import read_cell, write_cell
+from . import constants
+from .utils import read_cell, write_cell, logger
 
 def check_location_foursquare_detail(keyword, place, country, gsheet):
     """Checks if the name of place given corresponds to a place on the foursquare API
@@ -43,6 +43,7 @@ def check_location_foursquare_detail(keyword, place, country, gsheet):
     # get place id
     try:
       place_id = data['response']['venues'][0]['id']
+      name = data['response']['venues'][0]['name']
 
       # perform detail search on foursquare - premium call using the place_id
       url = 'https://api.foursquare.com/v2/venues/' + place_id
@@ -62,8 +63,10 @@ def check_location_foursquare_detail(keyword, place, country, gsheet):
     # return dictionary
     if place_id != 'None':
         result = data
+        logger.info('    Fouursquare detail API venue found as: {}...'.format(name))
     else:
         result = {}
+        logger.info('    Foursquare detail API data not found...')
     
     # update usage - regular and premium
     usage = int(read_cell(gsheet, 'foursquare', 'COUNT'))
@@ -103,7 +106,8 @@ def check_location_foursquare(keyword, place, country, gsheet):
     if x:
       if x['venues']:
         try:
-          result.append(x['venues'][0]['name'])
+          name = x['venues'][0]['name']
+          result.append(name)
         except:
           raise ValueError('Name missing for key: ' + keyword)
 
@@ -120,6 +124,11 @@ def check_location_foursquare(keyword, place, country, gsheet):
         result = []
     else:
       result = []
+    
+    if result:
+        logger.info('    Foursquare API venue found as: {}...'.format(name))
+    else:
+        logger.info('    Foursquare API data not found...')
 
     # update usage
     usage = int(read_cell(gsheet, 'foursquare', 'COUNT'))
@@ -148,7 +157,8 @@ def check_location_here(keyword, place, country, gsheet):
     # form basic list of results to return for now
     if x:
       try:
-        result.append(x['title'])
+        name = x['title']
+        result.append(name)
       except:
         raise ValueError('Title not found for key: ' + place)
 
@@ -174,6 +184,11 @@ def check_location_here(keyword, place, country, gsheet):
 
     else:
       result = []
+
+    if result:
+        logger.info('    HERE API venue found as: {}...'.format(name))
+    else:
+        logger.info('    HERE API data not found...')
 
     # update usage
     usage = int(read_cell(gsheet, 'here', 'COUNT'))

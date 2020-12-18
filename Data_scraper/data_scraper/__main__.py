@@ -1,22 +1,22 @@
 """ Data_scraper python package's main enry point code
 
     To run the package, please use command:
-        python data_scraper [-h] [--api] [--test]
+        python -m data_scraper [-h] [--api] [--test]
 """
 
 import spacy
-import constants
 import os
 import argparse
 import math
 from datetime import datetime
 from selenium import webdriver
-from user import User
-from search_google import define_googlequery, request_urls
-from scrape_web import scrape_page
-from data_cleaning import clean_data
-from utils import read_json_file, write_output_csv, get_gsheet, logger, read_pickle_file, str2bool
-from get_locationinfo import get_locationinfo
+from .user import User
+from .search_google import define_googlequery, request_urls
+from .scrape_web import scrape_page
+from .data_cleaning import clean_data
+from .utils import read_json_file, write_output_csv, get_gsheet, logger, read_pickle_file, str2bool
+from .get_locationinfo import get_locationinfo
+from . import constants
 
 def main(api_type, keyword, headless):
     """ Main function for data scraping tool 
@@ -161,20 +161,21 @@ def main(api_type, keyword, headless):
         
         # count how many files are there
         for filename in os.listdir(output_path):
-            # ignore CSV data file
-            if not filename.endswith('.csv'):
+            # only look at pickle files
+            if filename.endswith('.pkl'):
                 files_count += 1
-
+                
         for filename in os.listdir(output_path):
-            # ignore CSV data file
-            if not filename.endswith('.csv'):
+            # only look at pickle files
+            if filename.endswith('.pkl'):
                 tmp_dict = read_pickle_file(os.path.join(output_path, filename))
                 output_dict[tmp_dict['name']] = tmp_dict
                 count += 1
 
             # every n files, write them out
-            if count % constants.NUM_LOC_PER_CSV == 0 or count == files_count: 
+            if count != 0 and (count % constants.NUM_LOC_PER_CSV == 0 or count == files_count): 
                 write_output_csv(output_dict, output_path, "CSV_DATA_Set{}".format(math.ceil(count / constants.NUM_LOC_PER_CSV)))
+                # reset
                 output_dict = {}
     
     # close webdriver

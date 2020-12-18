@@ -8,13 +8,13 @@
 """
 import requests
 import webbrowser
-import constants
+from . import constants
 from bs4 import BeautifulSoup
 from selenium.webdriver.common.keys import Keys
 from selenium.webdriver.support.ui import WebDriverWait
 from selenium.webdriver.support import expected_conditions as EC 
 from selenium.webdriver.common.by import By
-from utils import logger
+from .utils import logger
 
 def display(content, filename='output.html'):
     with open(filename, 'wb') as f:

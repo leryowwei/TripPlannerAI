@@ -2,12 +2,11 @@
     scraping trip advisor.
 """
 
-import constants
-import os
-from access_api import check_location_foursquare, check_location_foursquare_detail, check_location_here
-from extract_gmaps import extract_gmaps
-from extract_ta import extract_ta_data 
-from utils import read_cell, write_cell, write_output_pickle, logger, write_output_json
+from . import constants
+from .access_api import check_location_foursquare, check_location_foursquare_detail, check_location_here
+from .extract_gmaps import extract_gmaps
+from .extract_ta import extract_ta_data 
+from .utils import read_cell, write_cell, write_output_pickle, logger, write_output_json
 from datetime import datetime, date, timezone
 
 def check_limit(gsheet, api_type):
@@ -26,14 +25,17 @@ def check_limit(gsheet, api_type):
     current_time = datetime.now(timezone.utc).replace(tzinfo=None)
     time_between = current_time - access_date
     
+    # convert to days
+    time_between = time_between.total_seconds() / (60 * 60 * 24)
+    
     # find out limits and refresh days
     api_days = constants.API_LIMITS[api_type]['DAY']
     api_limit = constants.API_LIMITS[api_type]['LIMIT']
 
     # check if limit is reached
-    if time_between.days <= api_days and usage < api_limit:
+    if time_between <= api_days and usage < api_limit:
         flag = True
-    elif time_between.days > api_days:
+    elif time_between > api_days:
         # get midnight of today's date
         today = date.today()
         midnight = datetime.combine(today, datetime.min.time())
@@ -116,6 +118,8 @@ def get_locationinfo(scraped_location, location_found, user_class, driver, gshee
                     
                     # add location to the location found list
                     location_found.append(place_name)
+                    
+                    logger.info('-------------------------------------------------------------------')
                     
                 else:
                     # quota reached. Exit from for loop

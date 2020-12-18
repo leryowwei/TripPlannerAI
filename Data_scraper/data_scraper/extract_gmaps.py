@@ -2,7 +2,8 @@
     is an actual place.
 """
 import re
-from utils import logger
+from urllib.parse import unquote
+from .utils import logger
 
 def extract_gmaps(keyword, driver):
     """ This function uses selenium to navigate to google maps to check if the keyword
@@ -15,7 +16,7 @@ def extract_gmaps(keyword, driver):
     """ 
     gmaps_website ="https://www.google.com/maps/search/{}".format(keyword)
     driver.get(gmaps_website)
-    driver.implicitly_wait(5)
+    driver.implicitly_wait(2)
     
     place = None
     
@@ -31,12 +32,10 @@ def extract_gmaps(keyword, driver):
     
     # if got results, continue to find out the place name
     if not no_match:
-        xx = driver.find_elements_by_xpath("//div")
-        
         list_flag = False
         
         # if got list of results then turn flag on
-        for x in xx:
+        for x in driver.find_elements_by_xpath("//div"):
             try:
                 # find out aria-label
                 label = x.get_attribute('aria-label')
@@ -54,14 +53,19 @@ def extract_gmaps(keyword, driver):
         # if is list, take the first result
         # otherwise, take the current url       
         if list_flag:
-            for x in xx:
+            # find all elements that are button
+            div_eles = driver.find_elements_by_xpath("//div[@role='button']") + driver.find_elements_by_xpath("//a[@role='button']")
+            
+            for x in div_eles:
                 try:
                     # find out aria-label and button
                     label = x.get_attribute('aria-label')
                     role = x.get_attribute('role')
                     
-                    # ignore common words and with button
-                    if label.lower() not in ['none', 'google maps', 'map', 'available filters for this search', 'results for {}'.format(keyword)] and role == 'button':
+                    # ignore common words
+                    if label.lower() not in ['none', 'google maps', 'map', 'clear search', 
+                                             'available filters for this search', 'see more', 
+                                             'i agree', 'results for {}'.format(keyword)]: 
                         place = label
                         break
                 except:
@@ -69,22 +73,23 @@ def extract_gmaps(keyword, driver):
         else:
             url = driver.current_url
             
-            # clean url
+            # clean url and unquote url
             # remove https://
-            url = url.replace("https://", "")
+            url = unquote(url).replace("https://", "")
+            
             # get a list
             url_list = url.split("/")
             
             # list always have google.com, maps, place, PLACE_NAME / google.com, maps, search, PLACE_NAME
             # get place name
             place = url_list[3]
-            
+
             # tidy up place name
             # split to list first using common delimiters
             place = re.split("[+ , %20]", place)
-            
+
             # filter list to remove unknown characters and join the list
-            place = " ".join([letter for letter in place if letter not in ["", " "]])         
+            place = " ".join([letter for letter in place if letter not in ["", " "]])       
     else:
         logger.info('Nothing found on google for {}....'.format(keyword))
 

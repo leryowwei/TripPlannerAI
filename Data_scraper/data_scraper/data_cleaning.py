@@ -1,7 +1,7 @@
 """ This module cleans the data scrape from the websites to get the location
     name. It returns a location_data dictionary.
 """
-from utils import logger
+from .utils import logger
 
 def clean_data(website_data, nlp_loc, user_class):
     """ Go through the headers obtained from all websites and store the valid 

@@ -1,7 +1,7 @@
 """ This module scraps a particular website to get the headers and paragraphs
 """
 import requests
-from utils import logger
+from .utils import logger
 from bs4 import BeautifulSoup
 
 def get_title(html):

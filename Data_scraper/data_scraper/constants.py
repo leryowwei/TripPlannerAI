@@ -9,9 +9,10 @@ foursquare_client_secret = 'TXWM5UUJPFIFF1J0WML5VDCOEOSZFI2D1PDSTF0LBAGMH3BQ'
 here_api_key = 'cYa8I0YLChdxJLX4CffPUM7hfdGqKMegp1dN4mdQ0wc'
 
 # API limit
-API_LIMITS = {'foursquare': {'DAY': 30, 'LIMIT': 99500},
-              'foursquare_detail': {'DAY': 1, 'LIMIT': 500},
-              'here': {'DAY': 30, 'LIMIT': 250000}}
+# limit quoted here are reduced by a few percent to give in some leeway
+API_LIMITS = {'foursquare': {'DAY': 1, 'LIMIT': 99000},
+              'foursquare_detail': {'DAY': 1, 'LIMIT': 495},
+              'here': {'DAY': 30, 'LIMIT': 245000}}
 
 # output data info
 TMP_LOCFOUND_NAME = 'TMP_LOCFOUND'
@@ -20,9 +21,6 @@ NUM_LOC_PER_CSV = 10.0
 
 # trip advisor limit
 TA_REVIEW_LIMIT = 5
-
-# log file name
-LOG_FILE_NAME = 'data_scraper.log'
 
 # GOOGLE SHEET INFO
 # GOOGLE SHEET HERE: https://docs.google.com/spreadsheets/d/1YzKpOIucoUpPXohoF_OjQrKm1Zyas0pVOpgLjqHTcpY/edit#gid=0

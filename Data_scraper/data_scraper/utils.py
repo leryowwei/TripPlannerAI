@@ -3,12 +3,13 @@
 import pickle
 import os
 import csv
-import constants
 import logging
 import json
+from . import constants
 from googleapiclient.discovery import build
 from google_auth_oauthlib.flow import InstalledAppFlow
 from google.auth.transport.requests import Request
+from datetime import datetime
 
 def read_pickle_file(filename):
   """read python dict back from the file"""
@@ -137,15 +138,20 @@ def str2bool(v):
 def setup_logging():
     """ Get logger. Can be called in each module"""    
 
-    if os.path.exists(constants.LOG_FILE_NAME):
-        os.remove(constants.LOG_FILE_NAME)
+    log_file_name = 'DataScraper_{}.log'.format(datetime.today().strftime('%Y%m%d_%H%M%S'))
+    
+    try:
+        if os.path.exists(log_file_name):
+            os.remove(log_file_name)
+    except:
+        pass
 
     # create logger
     log = logging.getLogger('DATA')
     log.setLevel(logging.DEBUG)
     
     # create file handler which logs even debug messages
-    fh = logging.FileHandler(constants.LOG_FILE_NAME)
+    fh = logging.FileHandler(log_file_name, 'w', 'utf-8')
     fh.setLevel(logging.INFO)
     
     # create console handler with a higher log level

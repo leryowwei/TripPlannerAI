@@ -8,8 +8,8 @@ def define_googlequery(user_class):
     # country = user_class.country
 
     # TODO: need to work out algorithms to define a highly customised list
-    query_list = [place + " timeout to do list",
-                  # place + " where to eat eater",
+    query_list = [# place + " timeout to do list",
+                  place + " where to eat eater",
                   # place + " romantic things to do",
                   # place + " itinerary 3 days",
                   # place + " places to eat local",
