@@ -3,7 +3,6 @@
     To run the package, please use command:
         python -m data_scraper [-h] [--api] [--test]
 """
-
 import spacy
 import os
 import argparse
@@ -17,6 +16,7 @@ from .data_cleaning import clean_data
 from .utils import read_json_file, write_output_csv, get_gsheet, logger, read_pickle_file, str2bool
 from .get_locationinfo import get_locationinfo
 from . import constants
+from func_timeout import func_timeout, FunctionTimedOut
 
 def main(api_type, keyword, headless):
     """ Main function for data scraping tool 
@@ -120,9 +120,16 @@ def main(api_type, keyword, headless):
             # store as dictionary, key: header name, value: paragraph associated to header
             logger.info('Scraping all urls found...')
             websites_data = {}
+            # sometimes beautiful soup hangs - so implement time check
+            # if after 5 secs and still not yet finish scraping the one url, then terminate it
             for x in urls:
-                websites_data = scrape_page(x, websites_data)
-        
+                try:
+                    websites_data = func_timeout(5, scrape_page, args=(x, websites_data))
+                except FunctionTimedOut:
+                    logger.warning('Timed out when scraping url {}. Skipped...'.format(x))
+                except Exception as e:
+                    raise ValueError('Web scraping failed...')
+
             # go through all the headers collected and run nlp on them to recognise the
             # location entity that we are interested in
             logger.info('Data cleaning...')
