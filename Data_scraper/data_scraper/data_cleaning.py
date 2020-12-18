@@ -1,6 +1,7 @@
 """ This module cleans the data scrape from the websites to get the location
     name. It returns a location_data dictionary.
 """
+from utils import logger
 
 def clean_data(website_data, nlp_loc, user_class):
     """ Go through the headers obtained from all websites and store the valid 
@@ -17,6 +18,7 @@ def clean_data(website_data, nlp_loc, user_class):
     country = user_class.country
     
     count = 0
+    location_data = {}
 
     # go through all keys and find out which one to discard
     # if useful key, setup dictionary to store API data later
@@ -45,7 +47,7 @@ def clean_data(website_data, nlp_loc, user_class):
                         
                         count += 1
     
-    print ("A total of {} headers/keywords found....".format(count))   
+    logger.info("A total of {} headers/keywords found....".format(count))   
         
     return location_data
 

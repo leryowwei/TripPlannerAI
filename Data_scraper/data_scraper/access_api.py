@@ -4,49 +4,19 @@
     The data are returned in the form of dictionary.
     
     APIs available are:
-        (1) Google API - WARNING running on FREE credit
+        (1) Google API [NO LONGER USED]
         (2) Foursquare detail API - Premium endpoint and limited to 500 pulls per day
         (3) Foursquare API - 90,000 per day but limited info
         (4) Here API - 250K per month
 
 """
-    
 import requests
 import json
 import herepy
 import constants
+from utils import read_cell, write_cell
 
-def check_location_google(keyword, place, country):
-    """ Find out the actualy place based on the keyword using google api
-    
-        WARNING: THIS IS CURRENTLY RUNNING ON FREE CREDIT. ONCE FREE CREDIT IS RUN OUT,
-        WE WILL NEED TO PAY
-        
-        More information about the api: https://developers.google.com/places/web-service/details
-    
-    """
-    keyword = "{} {} {}".format(keyword, place, country)
-
-    # basic fields which do not need to pay    
-    fields = ['name', 'formatted_address', 'permanently_closed', 'business_status', 
-              'place_id', 'type']
-    
-    api_key = constants.google_api_key
-    
-    url = "https://maps.googleapis.com/maps/api/place/findplacefromtext/json?input="+ keyword + \
-          "&inputtype=textquery&fields=" + ",".join(fields) + "&key="+ api_key 
-          
-    response = requests.get(url).json()
-
-    try:
-      #only take the first result
-      results = response['candidates'][0]
-    except:
-      results = {}
-
-    return results
-
-def check_location_foursquare_detail(keyword, place, country):
+def check_location_foursquare_detail(keyword, place, country, gsheet):
     """Checks if the name of place given corresponds to a place on the foursquare API
 
       if valid place, non empty dict will be returned. This includes all details of
@@ -94,10 +64,17 @@ def check_location_foursquare_detail(keyword, place, country):
         result = data
     else:
         result = {}
+    
+    # update usage - regular and premium
+    usage = int(read_cell(gsheet, 'foursquare', 'COUNT'))
+    write_cell(gsheet, 'foursquare', 'COUNT', usage + 1)
 
+    usage = int(read_cell(gsheet, 'foursquare_detail', 'COUNT'))
+    write_cell(gsheet, 'foursquare_detail', 'COUNT', usage + 1)    
+    
     return result
 
-def check_location_foursquare(keyword, place, country):
+def check_location_foursquare(keyword, place, country, gsheet):
     """Checks if the name of place given corresponds to a place on the foursquare API
 
       if valid place, non empty list with values will be returned
@@ -144,9 +121,13 @@ def check_location_foursquare(keyword, place, country):
     else:
       result = []
 
+    # update usage
+    usage = int(read_cell(gsheet, 'foursquare', 'COUNT'))
+    write_cell(gsheet, 'foursquare', 'COUNT', usage + 1)
+
     return result
 
-def check_location_here(keyword, place, country):
+def check_location_here(keyword, place, country, gsheet):
     """Checks if the name of place given corresponds to a place on the HERE API
 
       if valid place, non empty list with values will be returned
@@ -194,4 +175,39 @@ def check_location_here(keyword, place, country):
     else:
       result = []
 
+    # update usage
+    usage = int(read_cell(gsheet, 'here', 'COUNT'))
+    write_cell(gsheet, 'here', 'COUNT', usage + 1)
+
     return result
+
+# NO LONGER USED ----- CAN IGNORE
+def check_location_google(keyword, place, country):
+    """ Find out the actualy place based on the keyword using google api
+    
+        WARNING: THIS IS CURRENTLY RUNNING ON FREE CREDIT. ONCE FREE CREDIT IS RUN OUT,
+        WE WILL NEED TO PAY
+        
+        More information about the api: https://developers.google.com/places/web-service/details
+    
+    """
+    keyword = "{} {} {}".format(keyword, place, country)
+
+    # basic fields which do not need to pay    
+    fields = ['name', 'formatted_address', 'permanently_closed', 'business_status', 
+              'place_id', 'type']
+    
+    api_key = constants.google_api_key
+    
+    url = "https://maps.googleapis.com/maps/api/place/findplacefromtext/json?input="+ keyword + \
+          "&inputtype=textquery&fields=" + ",".join(fields) + "&key="+ api_key 
+          
+    response = requests.get(url).json()
+
+    try:
+      #only take the first result
+      results = response['candidates'][0]
+    except:
+      results = {}
+
+    return results

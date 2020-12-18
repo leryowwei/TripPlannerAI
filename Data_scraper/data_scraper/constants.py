@@ -4,15 +4,25 @@
 
 # API info
 # API key
-google_api_key = 'AIzaSyBMgMsYBSsb7wURHiA6HoQsj1fpQbT9lk8'
 foursquare_client_id = 'JV4HQCSP0QY100C1MICQCI5C3XHOVKZSWX1G5IRNSJAZMQFB'
 foursquare_client_secret = 'TXWM5UUJPFIFF1J0WML5VDCOEOSZFI2D1PDSTF0LBAGMH3BQ'
 here_api_key = 'cYa8I0YLChdxJLX4CffPUM7hfdGqKMegp1dN4mdQ0wc'
+
 # API limit
-google_limit = 2000 # monthly
-foursquare_limit = 99500 # monthly
-foursquare_detail_limit = 500 # daily
-here_limit = 250000 # monthly
+API_LIMITS = {'foursquare': {'DAY': 30, 'LIMIT': 99500},
+              'foursquare_detail': {'DAY': 1, 'LIMIT': 500},
+              'here': {'DAY': 30, 'LIMIT': 250000}}
+
+# output data info
+TMP_LOCFOUND_NAME = 'TMP_LOCFOUND'
+TMP_LOCSCRAPED_NAME = 'TMP_LOCSCRAPED'
+NUM_LOC_PER_CSV = 10.0
+
+# trip advisor limit
+TA_REVIEW_LIMIT = 5
+
+# log file name
+LOG_FILE_NAME = 'data_scraper.log'
 
 # GOOGLE SHEET INFO
 # GOOGLE SHEET HERE: https://docs.google.com/spreadsheets/d/1YzKpOIucoUpPXohoF_OjQrKm1Zyas0pVOpgLjqHTcpY/edit#gid=0
@@ -21,8 +31,7 @@ SPREADSHEET_ID = '1YzKpOIucoUpPXohoF_OjQrKm1Zyas0pVOpgLjqHTcpY'
 GSHEET_DICT = {'sheet': 'Sheet1',
                'foursquare': {'DATE': 'FOURSQUARE_DATE', 'COUNT': 'FOURSQUARE_COUNT'},
                'foursquare_detail': {'DATE': 'FOURSQUARE_DETAIL_DATE', 'COUNT': 'FOURSQUARE_DETAIL_COUNT'},
-               'here': {'DATE': 'HERE_DATE', 'COUNT': 'HERE_COUNT'},
-               'google': {'DATE': 'GOOGLE_DATE', 'COUNT': 'GOOGLE_COUNT'}}
+               'here': {'DATE': 'HERE_DATE', 'COUNT': 'HERE_COUNT'}}
 
 # default user profile from User class
 DEFAULT_USER = {'place':'singapore',

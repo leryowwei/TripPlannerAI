@@ -4,12 +4,15 @@ import pickle
 import os
 import csv
 import constants
+import logging
+import json
 from googleapiclient.discovery import build
 from google_auth_oauthlib.flow import InstalledAppFlow
 from google.auth.transport.requests import Request
 
 def read_pickle_file(filename):
   """read python dict back from the file"""
+  
   pkl_file = open(filename, 'rb')
   mydict = pickle.load(pkl_file)
   pkl_file.close()
@@ -24,21 +27,35 @@ def write_output_pickle(data, output_dir, output_file_name):
   pickle.dump(data, output)
   output.close()
 
-  print ('Successfully created pickle file...')
+  logger.info('Successfully created pickle file...')
 
   return None
 
 def write_output_csv(data, output_dir, output_file_name):
   """ Writes output data as csv format """
-  
+
   # write python dict to csv
   with open(os.path.join(output_dir,'{}.csv'.format(output_file_name)),'w', encoding='utf-8') as f:
     w = csv.writer(f)
     w.writerows(data.items())
 
-  print ('Successfully created csv file...')
+  logger.info('Successfully created csv file...')
 
   return None
+
+def write_output_json(data, output_dir, output_file_name):
+    """Writes output file as json format """
+    
+    with open(os.path.join(output_dir, "{}.json".format(output_file_name)), 'w') as file_handle:
+        json.dump(data, file_handle)
+
+def read_json_file(filepath):
+    """Read json file """
+    
+    with open(filepath, 'r') as file_handle:
+        data = json.load(file_handle)
+    
+    return data
 
 def get_gsheet(path):
     """Get google sheet using credentials set up"""
@@ -99,11 +116,54 @@ def write_cell(gsheet, api_name, field, input_value):
     # write data
     values = [[input_value],]
     body = {'values': values}
-        
-    gsheet.values().update(spreadsheetId=constants.SPREADSHEET_ID, range='Sheet1!B2', valueInputOption='RAW', body=body).execute()
 
     # write data
     gsheet.values().update(spreadsheetId=constants.SPREADSHEET_ID, range=range_name, 
                            valueInputOption='RAW', body=body).execute()
     
     return gsheet
+
+def str2bool(v):
+    """Convert string to boolean"""
+    if isinstance(v, bool):
+       return v
+    if v.lower() in ('yes', 'true', 't', 'y', '1'):
+        return True
+    elif v.lower() in ('no', 'false', 'f', 'n', '0'):
+        return False
+    else:
+        raise ValueError('Boolean value expected.')
+
+def setup_logging():
+    """ Get logger. Can be called in each module"""    
+
+    if os.path.exists(constants.LOG_FILE_NAME):
+        os.remove(constants.LOG_FILE_NAME)
+
+    # create logger
+    log = logging.getLogger('DATA')
+    log.setLevel(logging.DEBUG)
+    
+    # create file handler which logs even debug messages
+    fh = logging.FileHandler(constants.LOG_FILE_NAME)
+    fh.setLevel(logging.INFO)
+    
+    # create console handler with a higher log level
+    ch = logging.StreamHandler()
+    ch.setLevel(logging.INFO)
+    
+    # create formatter and add it to the handlers
+    formatter = logging.Formatter('%(asctime)s - %(levelname)s : %(message)s')
+    fh.setFormatter(formatter)
+    ch.setFormatter(formatter)
+    
+    # add the handlers to the logger
+    log.addHandler(fh)
+    log.addHandler(ch)
+    
+    # first log message
+    log.info("Setup logger...")
+        
+    return log
+
+logger = setup_logging()

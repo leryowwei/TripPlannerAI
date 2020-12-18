@@ -1,6 +1,7 @@
 """ This module scraps a particular website to get the headers and paragraphs
 """
 import requests
+from utils import logger
 from bs4 import BeautifulSoup
 
 def get_title(html):
@@ -29,11 +30,11 @@ def scrape_page(url, websites_data):
     html = BeautifulSoup(r.content, 'html.parser')
     title_name = get_title(html)
     
-    print (url)
+    logger.info('Scraping {}'.format(url))
 
     # check if the same site has been scrapped before
     if title_name in websites_data:
-        print ("Website data already exists. Skipped.")
+        logger.info("    Website data already exists. Skipped.")
         return websites_data
     else:
         result = {}

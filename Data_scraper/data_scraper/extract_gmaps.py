@@ -2,6 +2,7 @@
     is an actual place.
 """
 import re
+from utils import logger
 
 def extract_gmaps(keyword, driver):
     """ This function uses selenium to navigate to google maps to check if the keyword
@@ -83,10 +84,8 @@ def extract_gmaps(keyword, driver):
             place = re.split("[+ , %20]", place)
             
             # filter list to remove unknown characters and join the list
-            place = " ".join([letter for letter in place if letter not in ["", " "]])
-            
-        print ("{} found on google for keyword: {}".format(place, keyword))          
+            place = " ".join([letter for letter in place if letter not in ["", " "]])         
     else:
-        print ('Nothing found on google for {}....'.format(keyword))
+        logger.info('Nothing found on google for {}....'.format(keyword))
 
     return place

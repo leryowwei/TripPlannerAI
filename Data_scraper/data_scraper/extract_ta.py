@@ -8,11 +8,13 @@
 """
 import requests
 import webbrowser
+import constants
 from bs4 import BeautifulSoup
 from selenium.webdriver.common.keys import Keys
 from selenium.webdriver.support.ui import WebDriverWait
 from selenium.webdriver.support import expected_conditions as EC 
 from selenium.webdriver.common.by import By
+from utils import logger
 
 def display(content, filename='output.html'):
     with open(filename, 'wb') as f:
@@ -25,7 +27,7 @@ def get_soup(session, url, show=False):
         display(r.content, 'temp.html')
 
     if r.status_code != 200: # not OK
-        print('[get_soup] status code:', r.status_code)
+        logger.warning('[get_soup] status code: {}'.format(r.status_code))
     else:
         return BeautifulSoup(r.text, 'html.parser')
 
@@ -38,7 +40,7 @@ def post_soup(session, url, params, show=False):
         display(r.content, 'temp.html')
 
     if r.status_code != 200: # not OK
-        print('[post_soup] status code:', r.status_code)
+        logger.warning('[post_soup] status code: {}'.format(r.status_code))
     else:
         return BeautifulSoup(r.text, 'html.parser')
 
@@ -62,7 +64,7 @@ def parse(session, review_limit, url):
     soup = get_soup(session, url)
 
     if not soup:
-        print('[parse] no soup:', url)
+        logger.info('[parse] no soup: {}'.format(url))
         return
 
     url_template = url.replace('-Reviews-', '-Reviews-or{}-')
@@ -114,7 +116,7 @@ def parse_reviews(session, url):
     soup =  get_soup(session, url)
 
     if not soup:
-        print('[parse_reviews] no soup:', url)
+        logger.info('[parse_reviews] no soup: {}'.format(url))
         return
 
     reviews_ids = get_reviews_ids(soup)
@@ -124,7 +126,7 @@ def parse_reviews(session, url):
     soup = get_more(session, reviews_ids)
 
     if not soup:
-        print('[parse_reviews] no soup:', url)
+        logger.warning('[parse_reviews] no soup: {}'.format(url))
         return
 
     items = []
@@ -146,7 +148,7 @@ def extract_ta_data(keyword, user_class, driver):
     """ main function to extract trip advisor reviews and suggested duration"""
 
     lang = 'en'
-    review_limit = 500
+    review_limit = constants.TA_REVIEW_LIMIT
     reviews = {}
     hours = "N/A"
     url = "N/A"
@@ -160,25 +162,33 @@ def extract_ta_data(keyword, user_class, driver):
     try:
         # find element for search box
         inputElement = driver.find_element_by_css_selector("input[type='search']")
-
+    
         # type in the search - using keyword
         inputElement.send_keys(keyword)
-        inputElement.send_keys(Keys.ENTER)
-
+        inputElement = driver.find_element_by_css_selector("input[type='search']")
+        
+        # keep clicking enter until the search box disappears - this means a new page is reached
+        # brute force method
+        try:
+            while True:
+                inputElement.send_keys(Keys.ENTER)
+        except:
+            pass
+            
         # get element after explicitly waiting for 10 seconds 
         element = WebDriverWait(driver, 10).until(EC.presence_of_element_located((By.CLASS_NAME, "result-title"))) 
-
+    
         # click the element  
         element.click()  
-
-        driver.implicitly_wait(5)
-
+    
+        driver.implicitly_wait(10)
+    
         driver.switch_to.window(driver.window_handles[-1])
-
+    
         url = driver.current_url
       
-        print ("    Scraping TA data from {}".format(url))
-
+        logger.info("    Scraping TA data from {}".format(url))
+    
         # try and see if there's suggested duration
         try:
             x = driver.find_element_by_xpath("//span[contains(text(), 'Suggested Duration:')]")
@@ -187,13 +197,13 @@ def extract_ta_data(keyword, user_class, driver):
             hours = parent.text.replace("Suggested Duration:", "")
         except:
             pass
-
-        print ("    Suggested duration for this location: %s" % format(hours))
-
+    
+        logger.info("    Suggested duration for this location: {}".format(hours))
+    
         # get all reviews for 'url' and 'lang'
         reviews = scrape(url, review_limit, lang)
     except:
-        print ("    Unable to extract Trip Advisor data for {}".format(keyword))
+        logger.info("    Unable to extract Trip Advisor data for {}".format(keyword))
 
     # tidy everything together as a dictionary
     tripadvisor_dict = {'reviews': reviews,
