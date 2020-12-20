@@ -183,6 +183,7 @@ def extract_ta_data(keyword, user_class, driver):
     
         driver.implicitly_wait(10)
     
+        driver.close()
         driver.switch_to.window(driver.window_handles[-1])
     
         url = driver.current_url

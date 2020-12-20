@@ -10,45 +10,70 @@ from googleapiclient.discovery import build
 from google_auth_oauthlib.flow import InstalledAppFlow
 from google.auth.transport.requests import Request
 from datetime import datetime
+from pathvalidate import sanitize_filename, is_valid_filename
+
+def check_filename(output_file_name):
+    """Check filename is valid or not. If invalid, convert the file"""
+
+    if not is_valid_filename(output_file_name):
+        new_file_name = sanitize_filename(output_file_name)
+        logger.warning('File name {} invalid. New file name is {}.pkl.'.format(output_file_name, new_file_name))
+    else:
+        new_file_name = output_file_name
+
+    return new_file_name
 
 def read_pickle_file(filename):
-  """read python dict back from the file"""
-  
-  pkl_file = open(filename, 'rb')
-  mydict = pickle.load(pkl_file)
-  pkl_file.close()
-
-  return mydict
+    """read python dict back from the file"""
+    
+    pkl_file = open(filename, 'rb')
+    mydict = pickle.load(pkl_file)
+    pkl_file.close()
+    
+    return mydict
 
 def write_output_pickle(data, output_dir, output_file_name):
-  """ Writes output data as pickle format """
-
-  # write python dict to a file
-  output = open(os.path.join(output_dir, '{}.pkl'.format(output_file_name)), 'wb')
-  pickle.dump(data, output)
-  output.close()
-
-  logger.info('Successfully created pickle file...')
-
-  return None
+    """ Writes output data as pickle format """
+  
+    # check filename
+    output_file_name = check_filename(output_file_name)
+    
+    # write python dict to a file
+    output = open(os.path.join(output_dir, '{}.pkl'.format(output_file_name)), 'wb')
+    pickle.dump(data, output)
+    output.close()
+    
+    logger.info('Successfully created pickle file {}.pkl...'.format(output_file_name))
+    
+    return None
 
 def write_output_csv(data, output_dir, output_file_name):
-  """ Writes output data as csv format """
+    """ Writes output data as csv format """
 
-  # write python dict to csv
-  with open(os.path.join(output_dir,'{}.csv'.format(output_file_name)),'w', encoding='utf-8') as f:
-    w = csv.writer(f)
-    w.writerows(data.items())
-
-  logger.info('Successfully created csv file...')
-
-  return None
+    # check filename
+    output_file_name = check_filename(output_file_name)
+    
+    # write python dict to csv
+    with open(os.path.join(output_dir,'{}.csv'.format(output_file_name)),'w', encoding='utf-8') as f:
+        w = csv.writer(f)
+        w.writerows(data.items())
+    
+    logger.info('Successfully created csv file {}.csv...'.format(output_file_name))
+    
+    return None
 
 def write_output_json(data, output_dir, output_file_name):
     """Writes output file as json format """
-    
+
+    # check filename
+    output_file_name = check_filename(output_file_name)
+      
     with open(os.path.join(output_dir, "{}.json".format(output_file_name)), 'w') as file_handle:
         json.dump(data, file_handle)
+    
+    logger.info('Successfully created json file {}.json...'.format(output_file_name))
+    
+    return None
 
 def read_json_file(filepath):
     """Read json file """
@@ -127,7 +152,7 @@ def write_cell(gsheet, api_name, field, input_value):
 def str2bool(v):
     """Convert string to boolean"""
     if isinstance(v, bool):
-       return v
+        return v
     if v.lower() in ('yes', 'true', 't', 'y', '1'):
         return True
     elif v.lower() in ('no', 'false', 'f', 'n', '0'):
