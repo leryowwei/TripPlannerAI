@@ -27,7 +27,7 @@ def main(api_type, keyword, headless):
         
         (A) With testing mode
         ---------------------
-        (1) Access APIs and TripAdvisor to build database of the keyword specified
+        (1) Access APIs and scrap google maps to build database of the keyword specified
         (2) output final data as CSV     
         
         (B) Normal mode
@@ -127,7 +127,7 @@ def main(api_type, keyword, headless):
                     websites_data = func_timeout(5, scrape_page, args=(x, websites_data))
                 except FunctionTimedOut:
                     logger.warning('Timed out when scraping url {}. Skipped...'.format(x))
-                except Exception as e:
+                except Exception:
                     raise ValueError('Web scraping failed...')
 
             # go through all the headers collected and run nlp on them to recognise the
@@ -141,11 +141,11 @@ def main(api_type, keyword, headless):
         logger.info('Testing mode on. Directly accessing API using keyword specified: {}...'.format(keyword))
         
         # build scraped_data dictionary using the keyword
-        scraped_data = {keyword:{'website':'N/A', 'header':'N/A', 'paragraph':'N/A'}}
+        scraped_data = {keyword:{'website': 'N/A', 'header': 'N/A', 'paragraph': 'N/A'}}
         location_found = []
         
-    # Access APIS and Tripadvisor to build database
-    logger.info('Accessing APIs and TripAdvisor to build database...')
+    # Access APIS and scrap google maps and tripadvisor to build database
+    logger.info('Accessing APIs, tripadvisor and google maps to build database...')
     terminate_flag = get_locationinfo(scraped_data, location_found, user_class, driver, gsheet, api_type, output_path)
 
     # write final data to CSV if the code not terminated - put every n locations in one csv
@@ -168,14 +168,14 @@ def main(api_type, keyword, headless):
         
         # count how many files are there
         for filename in os.listdir(output_path):
-            # only look at pickle files
-            if filename.endswith('.pkl'):
+            # only look at json files
+            if filename.endswith('.json'):
                 files_count += 1
                 
         for filename in os.listdir(output_path):
-            # only look at pickle files
-            if filename.endswith('.pkl'):
-                tmp_dict = read_pickle_file(os.path.join(output_path, filename))
+            # only look at json files
+            if filename.endswith('.json'):
+                tmp_dict = read_json_file(os.path.join(output_path, filename))
                 output_dict[tmp_dict['name']] = tmp_dict
                 count += 1
 

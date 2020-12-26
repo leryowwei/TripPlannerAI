@@ -143,64 +143,98 @@ def parse_reviews(session, url):
         items.append(item)
 
     return items
+
+def extract_durations(driver):
+    """ Extract durations from trip advisor website """
+
+    # try and see if there's suggested duration
+    try:
+        x = driver.find_element_by_xpath("//span[contains(text(), 'Suggested Duration:')]")
+        parent = x.find_element_by_xpath('..')
         
+        hours = parent.text.replace("Suggested Duration:", "")
+    except:
+        hours = "N/A"    
+    
+    return hours
+
+def get_address(driver):
+    """ Get address from trip advisor website """
+    
+    # try and see if we can get the address
+    try:    
+        address = driver.find_element_by_xpath("//span[contains(text(), 'Address:')]/following-sibling::span").text
+    except:
+        address = "N/A"
+    
+    return address
+
+def get_place_name(driver):
+    """Get name of the place from trip advisor website"""
+    
+    # try and see if we can get the place name
+    try:    
+        place_name = driver.find_element_by_xpath("//h1[@id='HEADING']").text
+    except:
+        place_name = "N/A"
+    
+    return place_name   
+    
 def extract_ta_data(keyword, user_class, driver):
     """ main function to extract trip advisor reviews and suggested duration"""
 
     lang = 'en'
     review_limit = constants.TA_REVIEW_LIMIT
     reviews = {}
-    hours = "N/A"
     url = "N/A"
+    hours = "N/A"
 
     # add country to keyword
     keyword = "{} {}".format(keyword, user_class.country)
 
-    driver.get("https://www.tripadvisor.co.uk/Attractions-g186220-Activities-Bristol_England.html")
+    driver.get("https://www.tripadvisor.co.uk/Attractions-g294265-Activities-c57-t119-Singapore.html")
 
     # put everything in a big try, except loop
+    #try:
+    # find element for search box
+    inputElement = driver.find_element_by_css_selector("input[type='search']")
+
+    # type in the search - using keyword
+    inputElement.send_keys(keyword)
+    inputElement = driver.find_element_by_css_selector("input[type='search']")
+    
+    # keep clicking enter until the search box disappears - this means a new page is reached
+    # brute force method
     try:
-        # find element for search box
-        inputElement = driver.find_element_by_css_selector("input[type='search']")
-    
-        # type in the search - using keyword
-        inputElement.send_keys(keyword)
-        inputElement = driver.find_element_by_css_selector("input[type='search']")
+        while True:
+            inputElement.send_keys(Keys.ENTER)
+    except:
+        pass
         
-        # keep clicking enter until the search box disappears - this means a new page is reached
-        # brute force method
-        try:
-            while True:
-                inputElement.send_keys(Keys.ENTER)
-        except:
-            pass
-            
-        # get element after explicitly waiting for 10 seconds 
-        element = WebDriverWait(driver, 10).until(EC.presence_of_element_located((By.CLASS_NAME, "result-title"))) 
-    
-        # click the element  
-        element.click()  
-    
-        driver.implicitly_wait(10)
-    
-        driver.close()
-        driver.switch_to.window(driver.window_handles[-1])
-    
+    # get element after explicitly waiting for 10 seconds 
+    element = WebDriverWait(driver, 10).until(EC.presence_of_element_located((By.CLASS_NAME, "result-title"))) 
+
+    # click the element and switch to the new tab - also close the old one
+    element.click()  
+    driver.implicitly_wait(5)
+    driver.close()
+    driver.switch_to.window(driver.window_handles[-1])
+
+    # start scraping place name, suggested duration and reviews
+    try:
         url = driver.current_url
-      
         logger.info("    Scraping TA data from {}".format(url))
-    
-        # try and see if there's suggested duration
-        try:
-            x = driver.find_element_by_xpath("//span[contains(text(), 'Suggested Duration:')]")
-            parent = x.find_element_by_xpath('..')
-            
-            hours = parent.text.replace("Suggested Duration:", "")
-        except:
-            pass
-    
+
+        # get place name
+        place_name = get_place_name(driver)
+
+        # get postal address of the location
+        address = get_address(driver)
+
+        # get suggested durations
+        hours = extract_durations(driver)
         logger.info("    Suggested duration for this location: {}".format(hours))
-    
+
         # get all reviews for 'url' and 'lang'
         reviews = scrape(url, review_limit, lang)
     except:
@@ -209,6 +243,8 @@ def extract_ta_data(keyword, user_class, driver):
     # tidy everything together as a dictionary
     tripadvisor_dict = {'reviews': reviews,
                         'hours': hours,
-                        'url': url}
+                        'url': url,
+                        'address': address,
+                        'name': place_name}
 
     return tripadvisor_dict

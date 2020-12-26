@@ -1,12 +1,12 @@
 """ This module gets information of a specific location by accessing APIs and
-    scraping trip advisor.
+    scraping google maps.
 """
 
 from . import constants
 from .access_api import check_location_foursquare, check_location_foursquare_detail, check_location_here
-from .extract_gmaps import extract_gmaps
-from .extract_ta import extract_ta_data 
-from .utils import read_cell, write_cell, write_output_pickle, logger, write_output_json
+from .gmaps import GoogleMapsLocationInfo, GoogleMapsLocationReview
+from .utils import read_cell, write_cell, logger, write_output_json, check_within_country
+from .extract_ta import extract_ta_data
 from datetime import datetime, date, timezone
 
 def check_limit(gsheet, api_type):
@@ -51,7 +51,7 @@ def check_limit(gsheet, api_type):
     return flag
     
 def get_locationinfo(scraped_location, location_found, user_class, driver, gsheet, api_type, output_path):
-    """ Access APIs and tripadvisor to build location's information
+    """ Access google, tripadvisor and APIs to build location's information
     
         Steps:
             (1) Dump out a tmp file with all the location data first
@@ -72,15 +72,23 @@ def get_locationinfo(scraped_location, location_found, user_class, driver, gshee
 
     for count, keyword in enumerate(scraped_location, 1):
         # check google maps to see if it's a legit place. Otherwise, give a recommendation
-        # if None comes back, ignore this keyword
-        place_name = extract_gmaps("{} {} {}".format(keyword, place, country), driver)
-        
-        # got result means we will use the google map place name to search foursquare/here api and tripadvisor
-        # all results will be stored in a dictionary
-        if place_name:
+        gmaps_info = GoogleMapsLocationInfo(driver, "{} {} {}".format(keyword, place, country))
+
+        # read attributes
+        place_name = gmaps_info.place_name
+        coord = gmaps_info.get_coordinates()
+        url = gmaps_info.url
+
+        # check country of location
+        country_flag = False
+        if coord:
+            if check_within_country(user_class, coord):
+                country_flag = True
+
+        # carry on if it is a legit place and the location is in the same country
+        if place_name and country_flag:
             # make sure no repeatitive data        
             if place_name not in location_found:
-                
                 # put in a big try.. except
                 try:
                     logger.info("{}. Valid location. Keyword {} found to be {}. Building location's database now....".format(count, keyword, place_name))
@@ -97,6 +105,13 @@ def get_locationinfo(scraped_location, location_found, user_class, driver, gshee
                         
                     # continue getting data from api if limit not yet reached
                     if flag:
+                        # build database for location using google maps
+                        gmaps_database = gmaps_info.build_loc_database()
+
+                        # gather google reviews for location
+                        gmaps_review = GoogleMapsLocationReview(driver, url, place_name)
+                        gmaps_database['reviews'] = gmaps_review.build_loc_reviews()
+
                         # get data from api depending on user input
                         if api_type == 'foursquare':
                             api_data = check_location_foursquare(place_name, place, country, gsheet)
@@ -104,27 +119,25 @@ def get_locationinfo(scraped_location, location_found, user_class, driver, gshee
                             api_data = check_location_foursquare_detail(place_name, place, country, gsheet)
                         elif api_type == 'here':
                             api_data = check_location_here(place_name, place, country, gsheet)
-            
-                        # scrap trip advisor website to get reviews and hours
-                        tripadvisor_results = extract_ta_data(place_name, user_class, driver)
-            
-                        # store everything in temporary dictionary
-                        temp_dict = {}
-                        
+
+                        # get reviews and suggested duration from trip advisor
+                        ta_dict = extract_ta_data(place_name, user_class, driver)
+
                         # get existing data from the old dictionary
-                        temp_dict = scraped_location[keyword]  
+                        temp_dict = scraped_location[keyword]
                         
                         # store other data
-                        temp_dict = {'name': place_name,
-                                     'API used': api_type,
-                                     'API data': api_data,
-                                     'tripadvisor data': tripadvisor_results}
+                        temp_dict['name'] = gmaps_info.place_name
+                        temp_dict['Google_data'] = gmaps_database
+                        temp_dict['TripAdvisor_data'] = ta_dict
+                        temp_dict['API_used'] = api_type
+                        temp_dict['API_data'] = api_data
                         
-                        # dump data out as pickle file
-                        write_output_pickle(temp_dict, output_path, place_name)
+                        # dump data out as json file
+                        write_output_json(temp_dict, output_path, place_name)
                         
                         # add location to the location found list
-                        location_found.append(place_name)
+                        location_found.append(gmaps_info.place_name)
                         
                         logger.info('-------------------------------------------------------------------')
                     else:
@@ -155,7 +168,6 @@ def get_locationinfo(scraped_location, location_found, user_class, driver, gshee
                 new_scraped_loc[key] = scraped_location[key]
                 
         # dump out location data and new location as json file
-        # pickle file has recursive problem due to recursive limit
         write_output_json(new_scraped_loc, output_path, constants.TMP_LOCSCRAPED_NAME)
         write_output_json(location_found, output_path, constants.TMP_LOCFOUND_NAME)
     

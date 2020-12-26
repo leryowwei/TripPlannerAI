@@ -12,6 +12,35 @@ from google.auth.transport.requests import Request
 from datetime import datetime
 from pathvalidate import sanitize_filename, is_valid_filename
 
+def check_within_country(user_class, coord):
+    """Check whether a location's longitude and latitude is within the country interested
+
+       Assume the country is in a rectangular box for now.
+       TODO: Improve this
+    """
+    # split coord to lat and long
+    latitude, longitude = [float(i) for i in coord]
+
+    # get bounding coordinates of the country
+    long_bounds = constants.COORD_BOUNDS[user_class.country]['longitude']
+    lat_bounds = constants.COORD_BOUNDS[user_class.country]['latitude']
+
+    # compare the limits
+    if latitude >= lat_bounds[0] and latitude <= lat_bounds[1]:
+        lat_flag = True
+    else:
+        lat_flag= False
+
+    if longitude >= long_bounds[0] and longitude <= long_bounds[1]:
+        long_flag = True
+    else:
+        long_flag = False
+
+    if lat_flag and long_flag:
+        return True
+    else:
+        return False
+
 def check_filename(output_file_name):
     """Check filename is valid or not. If invalid, convert the file"""
 

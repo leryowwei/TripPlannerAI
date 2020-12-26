@@ -22,6 +22,12 @@ NUM_LOC_PER_CSV = 10.0
 # trip advisor limit
 TA_REVIEW_LIMIT = 5
 
+# google reviews limit
+GOOGLE_REVIEW_LIMIT = 20
+
+# latitude and longitude bounds (lat, long) of singapore (hardcoded for now)
+COORD_BOUNDS = {'singapore': {'latitude': [1.18, 1.48], 'longitude': [103.58, 104.15]}}
+
 # GOOGLE SHEET INFO
 # GOOGLE SHEET HERE: https://docs.google.com/spreadsheets/d/1YzKpOIucoUpPXohoF_OjQrKm1Zyas0pVOpgLjqHTcpY/edit#gid=0
 SCOPES = ['https://www.googleapis.com/auth/spreadsheets']
