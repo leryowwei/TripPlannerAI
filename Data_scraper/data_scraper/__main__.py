@@ -1,7 +1,7 @@
 """ Data_scraper python package's main enry point code
 
     To run the package, please use command:
-        python -m data_scraper [-h] [--api] [--test]
+        python -m data_scraper [-h] [--api API_NAME,str] [--test LOCATION_NAME,str] [--headless BOOLEAN]
 """
 import spacy
 import os

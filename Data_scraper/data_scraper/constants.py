@@ -23,7 +23,7 @@ NUM_LOC_PER_CSV = 10.0
 TA_REVIEW_LIMIT = 5
 
 # google reviews limit
-GOOGLE_REVIEW_LIMIT = 20
+GOOGLE_REVIEW_LIMIT = 200
 
 # latitude and longitude bounds (lat, long) of singapore (hardcoded for now)
 COORD_BOUNDS = {'singapore': {'latitude': [1.18, 1.48], 'longitude': [103.58, 104.15]}}

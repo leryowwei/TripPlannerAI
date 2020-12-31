@@ -165,7 +165,10 @@ def get_address(driver):
     try:    
         address = driver.find_element_by_xpath("//span[contains(text(), 'Address:')]/following-sibling::span").text
     except:
-        address = "N/A"
+        try:
+            address = driver.find_element_by_xpath("//a[@href='#MAPVIEW']").text
+        except:
+            address = "N/A"
     
     return address
 
@@ -176,7 +179,10 @@ def get_place_name(driver):
     try:    
         place_name = driver.find_element_by_xpath("//h1[@id='HEADING']").text
     except:
-        place_name = "N/A"
+        try:
+            place_name = driver.find_element_by_xpath("//h1[@data-test-target='top-info-header']").text
+        except:
+            place_name = "N/A"
     
     return place_name   
     

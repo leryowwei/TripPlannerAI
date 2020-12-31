@@ -268,6 +268,9 @@ class GoogleMapsLocationReview:
         time.sleep(2)
         self._give_consent()
 
+        # find out how many reviews are available
+        self.no_of_reviews = self._get_number_of_reviews()
+
     def _give_consent(self):
         """Give consent to google maps website"""
         # try and see if consent window exists and accept it
@@ -278,6 +281,21 @@ class GoogleMapsLocationReview:
             self.driver.switch_to.default_content()
         except:
             pass
+
+    def _get_number_of_reviews(self):
+        """Find out the total number of reviews for this location"""
+        no_of_reviews = None
+        for button in self.driver.find_elements_by_xpath("//button"):
+            try:
+                action = button.get_attribute('aria-label').lower()
+
+                if "review" in action:
+                    no_of_reviews = [int(i) for i in action.split() if i.isdigit()] [0]
+                    break
+            except:
+                pass
+
+        return no_of_reviews
 
     def _load_reviews_page(self):
         """Load reviews page from google maps"""
@@ -305,10 +323,17 @@ class GoogleMapsLocationReview:
 
     def _scroll(self):
         """ Scroll page i times depending on the number of reviews required to be scraped"""
+
+        # if actual reviews for location lesser than limit, then only scroll the page based on the actual number of reviews
+        scroll_reviews = GOOGLE_REVIEW_LIMIT
+        if self.no_of_reviews:
+            if self.no_of_reviews < GOOGLE_REVIEW_LIMIT:
+                scroll_reviews = self.no_of_reviews
+
         try:
             # scroll page i times depending on the number of reviews required - assume that one scroll contains 2 reviews
             # this is to load the reviews in advance
-            for i in range(0, math.ceil(GOOGLE_REVIEW_LIMIT / 2)):
+            for i in range(0, math.ceil(scroll_reviews / 2)):
                 scrollable_div = self.driver.find_element_by_css_selector(
                     'div.section-layout.section-scrollbox.scrollable-y.scrollable-show')
                 self.driver.execute_script('arguments[0].scrollTop = arguments[0].scrollHeight', scrollable_div)
