@@ -19,12 +19,6 @@ TMP_LOCFOUND_NAME = 'TMP_LOCFOUND'
 TMP_LOCSCRAPED_NAME = 'TMP_LOCSCRAPED'
 NUM_LOC_PER_CSV = 10.0
 
-# trip advisor limit
-TA_REVIEW_LIMIT = 5
-
-# google reviews limit
-GOOGLE_REVIEW_LIMIT = 200
-
 # latitude and longitude bounds (lat, long) of singapore (hardcoded for now)
 COORD_BOUNDS = {'singapore': {'latitude': [1.18, 1.48], 'longitude': [103.58, 104.15]}}
 

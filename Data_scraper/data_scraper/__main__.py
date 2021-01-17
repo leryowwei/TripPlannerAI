@@ -2,6 +2,7 @@
 
     To run the package, please use command:
         python -m data_scraper [-h] [--api API_NAME,str] [--test LOCATION_NAME,str] [--headless BOOLEAN]
+        [--ta NUM_OF_TRIPADVISOR_REVIEWS, int] [--google NUM_OF_GOOGLE_REVIEWS, int]
 """
 import spacy
 import os
@@ -13,12 +14,12 @@ from .user import User
 from .search_google import define_googlequery, request_urls
 from .scrape_web import scrape_page
 from .data_cleaning import clean_data
-from .utils import read_json_file, write_output_csv, get_gsheet, logger, read_pickle_file, str2bool
+from .utils import read_json_file, write_output_csv, get_gsheet, logger, str2bool
 from .get_locationinfo import get_locationinfo
 from . import constants
 from func_timeout import func_timeout, FunctionTimedOut
 
-def main(api_type, keyword, headless):
+def main(api_type, keyword, headless, ta_review_limits, google_review_limits):
     """ Main function for data scraping tool 
         
         Calls relevant functions and go through the whole process
@@ -63,6 +64,11 @@ def main(api_type, keyword, headless):
     
     # log message for API
     logger.info('API: {} chosen by user. All data will be obtained from this API...'.format(api_type))
+
+    # log message for number of reviews to scrap
+    logger.info('{} tripadvisor reviews will be scraped per location (based on user input)...'.format(ta_review_limits))
+    logger.info('{} google maps reviews will be scraped per location (based on user input)...'
+                .format(google_review_limits))
 
     # set up google sheet for API counter
     logger.info("Getting google sheet....")
@@ -146,7 +152,8 @@ def main(api_type, keyword, headless):
         
     # Access APIS and scrap google maps and tripadvisor to build database
     logger.info('Accessing APIs, tripadvisor and google maps to build database...')
-    terminate_flag = get_locationinfo(scraped_data, location_found, user_class, driver, gsheet, api_type, output_path)
+    terminate_flag = get_locationinfo(scraped_data, location_found, user_class, driver, gsheet, api_type, output_path,
+                                      ta_review_limits, google_review_limits)
 
     # write final data to CSV if the code not terminated - put every n locations in one csv
     if not terminate_flag:
@@ -199,16 +206,27 @@ if __name__ == "__main__":
     parser = argparse.ArgumentParser(description = 'Data scraping engine for trip planner AI tool...')
     parser.add_argument('--api', type=str, default='foursquare', 
                         choices=['foursquare', 'foursquare_detail', 'here'],
-                        help='Default is foursquare. User can choose from the list: foursquare, foursquare_detail and here.')
+                        help='Default is foursquare. '
+                             'User can choose from the list: foursquare, foursquare_detail and here.')
 
     parser.add_argument('--test', type=str, default=None,
-                        help='This is testing mode. Insert the keyword to find out the API information for this location')
+                        help='This is testing mode. '
+                             'Insert the keyword to find out the API information for this location')
 
     parser.add_argument('--headless', type=str2bool, default=True, 
-                        help='Default is True. If set to False, selenium window will be shown. Otherwise, headless option will be used. Setting to TRUE will slow things down')
-    
+                        help='Default is True. If set to False, selenium window will be shown. '
+                             'Otherwise, headless option will be used. Setting to TRUE will slow things down')
+
+    parser.add_argument('--ta', type=int, default=5,
+                        help='This is to specify the number of reviews per location when scraping tripadvisor website. '
+                             'Default is 5.')
+
+    parser.add_argument('--google', type=int, default=5,
+                        help='This is to specify the number of reviews per location when scraping google maps website. '
+                             'Default is 5.')
+
     args = parser.parse_args()
     
     # call main function
-    main(args.api, args.test, args.headless)
+    main(args.api, args.test, args.headless, args.ta, args.google)
     

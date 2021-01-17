@@ -8,7 +8,6 @@ import math
 import random
 from urllib.parse import unquote
 from .utils import logger
-from .constants import GOOGLE_REVIEW_LIMIT
 
 
 class GoogleMapsLocationInfo:
@@ -189,7 +188,7 @@ class GoogleMapsLocationInfo:
 
                 if label:
                     if "category" in label:
-                        category = x.text
+                        category = x.text.lower()
             except:
                 pass
 
@@ -256,12 +255,13 @@ class GoogleMapsLocationInfo:
 
 
 class GoogleMapsLocationReview:
-    def __init__(self, driver, url, place_name):
+    def __init__(self, driver, url, place_name, review_limits):
         """Build google maps scraper class"""
-        # assign driver
+        # assign variables
         self.driver = driver
         self.url = url
         self.place_name = place_name
+        self.review_limits = review_limits
 
         # load driver to the website and give consent
         self.driver.get(self.url)
@@ -325,9 +325,9 @@ class GoogleMapsLocationReview:
         """ Scroll page i times depending on the number of reviews required to be scraped"""
 
         # if actual reviews for location lesser than limit, then only scroll the page based on the actual number of reviews
-        scroll_reviews = GOOGLE_REVIEW_LIMIT
+        scroll_reviews = self.review_limits
         if self.no_of_reviews:
-            if self.no_of_reviews < GOOGLE_REVIEW_LIMIT:
+            if self.no_of_reviews < self.review_limits:
                 scroll_reviews = self.no_of_reviews
 
         try:
@@ -355,7 +355,7 @@ class GoogleMapsLocationReview:
                 pass
 
             # exit loop when review quota is reached
-            if ite >= GOOGLE_REVIEW_LIMIT:
+            if ite >= self.review_limits:
                 break
 
     def _sort_most_relevant(self):
@@ -425,7 +425,7 @@ class GoogleMapsLocationReview:
                 reviews_list.append(temp_dict)
 
                 # exit loop when review quota is reached
-                if ite >= GOOGLE_REVIEW_LIMIT:
+                if ite >= self.review_limits:
                     break
         else:
             reviews_list = []

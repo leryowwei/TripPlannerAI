@@ -50,7 +50,8 @@ def check_limit(gsheet, api_type):
         
     return flag
     
-def get_locationinfo(scraped_location, location_found, user_class, driver, gsheet, api_type, output_path):
+def get_locationinfo(scraped_location, location_found, user_class, driver, gsheet, api_type, output_path, ta_review_limits,
+                     google_review_limits):
     """ Access google, tripadvisor and APIs to build location's information
     
         Steps:
@@ -109,7 +110,7 @@ def get_locationinfo(scraped_location, location_found, user_class, driver, gshee
                         gmaps_database = gmaps_info.build_loc_database()
 
                         # gather google reviews for location
-                        gmaps_review = GoogleMapsLocationReview(driver, url, place_name)
+                        gmaps_review = GoogleMapsLocationReview(driver, url, place_name, google_review_limits)
                         gmaps_database['reviews'] = gmaps_review.build_loc_reviews()
 
                         # get data from api depending on user input
@@ -121,7 +122,7 @@ def get_locationinfo(scraped_location, location_found, user_class, driver, gshee
                             api_data = check_location_here(place_name, place, country, gsheet)
 
                         # get reviews and suggested duration from trip advisor
-                        ta_dict = extract_ta_data(place_name, user_class, driver)
+                        ta_dict = extract_ta_data(place_name, user_class, driver, ta_review_limits)
 
                         # get existing data from the old dictionary
                         temp_dict = scraped_location[keyword]

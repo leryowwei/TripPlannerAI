@@ -8,7 +8,6 @@
 """
 import requests
 import webbrowser
-from . import constants
 from bs4 import BeautifulSoup
 from selenium.webdriver.common.keys import Keys
 from selenium.webdriver.support.ui import WebDriverWait
@@ -136,7 +135,7 @@ def parse_reviews(session, url):
         bubble_rating = review.select_one('span.ui_bubble_rating')['class']
         bubble_rating = bubble_rating[1].split('_')[-1]
 
-        item = {'rating': bubble_rating,
+        item = {'ratings': bubble_rating,
                 'review': review.find('p', class_='partial_entry').text,
                 'date': review.find('span', class_='ratingDate')['title']}
 
@@ -154,7 +153,7 @@ def extract_durations(driver):
         
         hours = parent.text.replace("Suggested Duration:", "")
     except:
-        hours = "N/A"    
+        hours = None
     
     return hours
 
@@ -168,7 +167,7 @@ def get_address(driver):
         try:
             address = driver.find_element_by_xpath("//a[@href='#MAPVIEW']").text
         except:
-            address = "N/A"
+            address = None
     
     return address
 
@@ -182,18 +181,17 @@ def get_place_name(driver):
         try:
             place_name = driver.find_element_by_xpath("//h1[@data-test-target='top-info-header']").text
         except:
-            place_name = "N/A"
+            place_name = None
     
     return place_name   
     
-def extract_ta_data(keyword, user_class, driver):
+def extract_ta_data(keyword, user_class, driver, review_limit):
     """ main function to extract trip advisor reviews and suggested duration"""
 
     lang = 'en'
-    review_limit = constants.TA_REVIEW_LIMIT
     reviews = {}
-    url = "N/A"
-    hours = "N/A"
+    url = None
+    hours = None
 
     # add country to keyword
     keyword = "{} {}".format(keyword, user_class.country)
@@ -201,7 +199,6 @@ def extract_ta_data(keyword, user_class, driver):
     driver.get("https://www.tripadvisor.co.uk/Attractions-g294265-Activities-c57-t119-Singapore.html")
 
     # put everything in a big try, except loop
-    #try:
     # find element for search box
     inputElement = driver.find_element_by_css_selector("input[type='search']")
 
