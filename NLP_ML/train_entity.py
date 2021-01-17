@@ -3,10 +3,10 @@ This module trains spacy's named entity recogniser:
     
 (1) improve spacy's prediction for entity 'LOC' so that it can
 recognise the places/locations that we are interested in.
-(2) train spacy to recognise a new entity called 'duration'. i.e. time to spend at once location
+(2) improve spacy's prediction for entity 'TIME'
 
 e.g. 1. Have a cup of tea at Cafe Max. Cafe Max will be the location that we want.
-e.g. 2. It has been a great adventure and we've spent 2 hours there. 2 hours is the duration.
+e.g. 2. It has been a great adventure and we've spent 2 hours there. 2 hours is the time.
 
 Trained NLP model is saved in the /NLP_ML/nlp_loc_model folder and is accessible to other codes.
 
@@ -58,8 +58,25 @@ TRAIN_DATA = [
     ("Paya Terubong Nasi Lemak | 5 AM", {"entities": [(0, 24, "LOC")]}),
     ("5.00 pm: Visit the Buddhist Temples of Pulau Tikus", {"entities": [(19, 50, "LOC")]}),
     ("Air Itam Sister Curry Mee | 8AM", {"entities": [(0, 25, "LOC")]}),
-    ("CY Choy Road Hokkien Mee | 7AM", {"entities": [(0, 24, "LOC")]}),]
-
+    ("CY Choy Road Hokkien Mee | 7AM", {"entities": [(0, 24, "LOC")]}),
+    # -- TIME --
+    ("I spend 2-3 hours riding bicycle.", {"entities": [(8, 17, "TIME")]}),
+    ("We had a whole day of fun there.", {"entities": [(7, 18, "TIME")]}),
+    ("You'll need about 30 minutes to see everything.", {"entities": [(18, 28, "TIME")]}),
+    ("It'll take a few hours to fully enjoy.", {"entities": [(11, 22, "TIME")]}),
+    ("I spent about half a day at the mall.", {"entities": [(14, 24, "TIME")]}),
+    ("We needed couple hours for the show.", {"entities": [(10, 22, "TIME")]}),
+    ("I had a whole morning just sightseeing.", {"entities": [(6, 21, "TIME")]}),
+    ("An afternoon was just enough to spend there.", {"entities": [(0, 12, "TIME")]}),
+    ("We spend an evening there.", {"entities": [(9, 19, "TIME")]}),
+    ("The whole thing took about half an hr.", {"entities": [(27, 37, "TIME")]}),
+    ("I spent one hour on it.", {"entities": [(8, 16, "TIME")]}),
+    ("He spent one hr on it.", {"entities": [(9, 15, "TIME")]}),
+    ("We took 4-5 hrs to finish everything.", {"entities": [(8, 15, "TIME")]}),
+    ("We had an entire day there.", {"entities": [(7, 20, "TIME")]}),
+    ("It is a place where you can spend a few hours.", {"entities": [(34, 45, "TIME")]}),
+    ("We spent a perfect afternoon there.", {"entities": [(19, 28, "TIME")]}),
+    ("It only took us 3 to 4 hours to finish.", {"entities": [(16, 28, "TIME")]})]
 # ---------------------------------------------------------
 
 @plac.annotations(
