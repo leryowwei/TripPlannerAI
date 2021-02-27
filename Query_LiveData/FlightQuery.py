@@ -1,117 +1,172 @@
-#testing file
+# try scraping kayak for flight details
 
-import requests
-import json
-import datetime
-from urllib import parse
+import pandas as pd
+import time
+from selenium import webdriver
+from kayak import Kayak
 
-RAPIDAPI_HOST = "skyscanner-skyscanner-flight-search-v1.p.rapidapi.com"
-RAPIDAPI_KEY = "f6407d6a0emsh592d8a450162320p136e87jsn3fec7c5018f7"
 
-class FlightQuery:
-    """ Flight price query using skyscanner API provided by rapid API"""
+class KayakFlight(Kayak):
+    def __init__(self, wbdriver):
+        """Build kayak scraper class for flights"""
+        super().__init__(wbdriver)
 
-    def __init__(self, params):
-        """Initialisation"""
-        # unpack inputs
-        self.currency = params['currency']
-        self.locale = params['locale']
-        self.origin = params['origin']
-        self.destination = params['destination']
-        self.user_country = params['user_country']
-        self.outbound_date = params['outbound_date']
-        self.inbound_date = params['inbound_date']
-        self.direct = params['onlydirect']
+        # read in IATA code csv file as pandas df
+        # TODO: need to update link to be modular
+        self.iata_df = pd.read_csv("D:/Documents/GitHub/TripPlannerAI/Miscellaneous/airport_codes_iata_only.csv")
 
-        # convert inputs to useful data needed for other methods
-        self.user_country_code = self.get_country_code(self.user_country)
-        self.origin_id = self.get_placeid(self.origin)
-        self.destination_id = self.get_placeid(self.destination)
+    def get_iata_code(self, destination):
+        """Get IATA code for a place"""
+        # TODO: need to do destination check or take the closest destination
+        return self.iata_df.loc[self.iata_df['municipality'] == destination, 'iata_code'].iloc[0]
 
-        # check if dates are correct otherwise raise error
-        self._validate_date(self.outbound_date)
-        self._validate_date(self.inbound_date)
+    def flight_url_builder(self, user):
+        """Constructs the flight search url depending on items specified by the user"""
+        url = self.base_url
+
+        # TODO: need to implement a series of checksss
+
+        # (1) Departure and destination places
+        code_name = "{}-{}".format(self.get_iata_code(user['departure_city']),
+                                   self.get_iata_code(user['destination_city']))
+
+        # (2) Dates
+        # check if date given is valid - got specific format
+        self._validate_date(user['departure_date'])
+        self._validate_date(user['return_date'])
+        # error will be raised - so if we reach this point means no error
+        dates = "{}/{}".format(user['departure_date'], user['return_date'])
+
+        # (3) number of people - adult and children
+        no_of_ppl = []
+        if user['adult'] == 1:
+            no_of_ppl.append('1adult')
+        else:
+            no_of_ppl.append('{}adults'.format(user['adult']))
+
+        if user['children'] > 0:
+            no_of_ppl.append('children{}'.format('-11' * user['children']))
+
+        no_of_ppl = '/'.join(no_of_ppl)
+
+        # (3) flight class type
+        flight_class = user['class']
+        if flight_class not in ['economy', 'premium', 'business', 'first']:
+            raise ValueError('Flight class: {} not recognised...'.format(flight_class))
+
+        # (4) sort type (best recommendation, shortest time, cheapest)
+        sort_type = user['sort_flight']
+        if sort_type not in ['bestflight_a', 'duration_a', 'price_a']:
+            raise ValueError('Sorting type: {} not recognised...'.format(sort_type))
+
+        # build url
+        url = "{}/flights/{}/{}/{}/{}?sort={}".format(self.base_url, code_name, dates, no_of_ppl, flight_class, sort_type)
+
+        return url
 
     @staticmethod
-    def _validate_date(date_text):
-        """Check if date is correct
+    def _get_flight_leg_details(element):
+        """Get detail information of the leg of flight"""
 
-            TODO: currently assume we only allow exact date to simplify algorithm. In reality, we can define YYYY-MM or
-            anytime. Also assume that all dates need to be specified and cannot be empty
-        """
-        # allowable formats are YYYY-MM-DD
-        if date_text:
-            try:
-                datetime.datetime.strptime(date_text, '%Y-%m-%d')
-            except ValueError:
-                raise ValueError("Incorrect data format, should be YYYY-MM-DD")
-        else:
-            raise ValueError("Inbound and outbound dates cannot be empty.")
+        flight_leg = {}
 
-    @staticmethod
-    def _form_url(link, url_params):
-        """Combine url and parameters to form a complete url"""
-        url_params = "/".join(str(x) for x in url_params)
-        if link[-1] == '/':
-            return "{}{}/".format(link, url_params)
-        else:
-            return "{}/{}/".format(link, url_params)
+        # get depart and arrival time
+        try:
+            flight_leg['depart_time'] = element.find_element_by_css_selector("span[class='depart-time base-time']").text
+            flight_leg['arrival_time'] = element.find_element_by_css_selector("span[class='arrival-time base-time']").text
+        except:
+            pass
 
-    def get_placeid(self, location):
-        """Get the place ID for the location interested"""
-        url_params = [self.user_country_code, self.currency, self.locale]
-        apicall = "https://skyscanner-skyscanner-flight-search-v1.p.rapidapi.com/apiservices/autosuggest/v1.0/"
-        link = self._form_url(apicall, url_params)
-        headers = {
-            "X-RapidAPI-Host": RAPIDAPI_HOST,
-            "X-RapidAPI-Key": RAPIDAPI_KEY,
-        }
-        querystring = {"query": location}
-        r = requests.get(link, headers=headers, params=querystring)
-        body = json.loads(r.text)
-        places = body['Places']
-        top_place_id = places[0]['PlaceId']
-        return top_place_id
+        # find out section stop details
+        try:
+            flight_leg['stop_number'] = element.find_element_by_css_selector("span[class^='stops-text']").text
+            flight_leg['layovers'] = element.find_element_by_css_selector("span[class='js-layover']").text
+        except:
+            pass
 
-    def get_country_code(self, country):
-        """Get country code"""
-        url_params = [self.locale]
-        apicall = "https://skyscanner-skyscanner-flight-search-v1.p.rapidapi.com/apiservices/reference/v1.0/countries/"
-        link = self._form_url(apicall, url_params)
-        headers = {
-            "X-RapidAPI-Host": RAPIDAPI_HOST,
-            "X-RapidAPI-Key": RAPIDAPI_KEY,
-        }
-        response = requests.get(link, headers=headers)
-        response = json.loads(response.text)
-        country_code = [item['Code'] for item in response['Countries'] if item['Name'] == country][0]
-        return country_code
+        # find out duration
+        try:
+            duration = element.find_element_by_css_selector("div[class='section duration allow-multi-modal-icons']").\
+                find_element_by_css_selector("div[class='top']").text
+            flight_leg['duration'] = duration
+        except:
+            pass
 
-    def get_quotes(self):
-        """Get quotes based on the user specified information"""
-        url_params = [self.user_country_code, self.currency, self.locale, self.origin_id, self.destination_id,
-                      self.outbound_date]
-        apicall = "https://skyscanner-skyscanner-flight-search-v1.p.rapidapi.com/apiservices/browsequotes/v1.0"
-        link = self._form_url(apicall, url_params)
-        headers = {
-            "X-RapidAPI-Host": RAPIDAPI_HOST,
-            "X-RapidAPI-Key": RAPIDAPI_KEY,
-        }
-        querystring = {"inboundpartialdate": str(self.inbound_date)}
-        response = requests.request("GET", link, headers=headers, params= querystring)
-        return response
+        # find out carriers (might have more than 1)
+        try:
+            flight_leg['carrier'] = []
+            carriers = element.find_element_by_css_selector("div[class='section stacked-carriers']").\
+                find_elements_by_css_selector("div[class='leg-carrier']")
+            for ele in carriers:
+                ele = ele.find_element_by_css_selector("img")
+                # remove the word logo
+                flight_leg['carrier'].append(ele.get_attribute('alt')[:-5])
+        except:
+            pass
 
-# try out code
-params = {'user_country': 'United Kingdom',
-          'locale': 'en-GB',
-          'destination': 'Singapore',
-          'origin': 'London, United Kingdom',
-          'outbound_date': '2021-01-11',
-          'inbound_date': '2021-01-18',
-          'currency': 'GBP',
-          'onlydirect': False}
+        return flight_leg
 
-fq = FlightQuery(params)
-response = fq.get_quotes()
+    def scrap_flight_details(self, url):
+        """Scrap flight details from the url provided"""
+        # load driver to the website and give consent
+        self.load_wbdriver(url)
 
-print (response.text)
+        # get the first result
+        ele = self.driver.find_elements_by_xpath("//div[@class='best-flights-list-results']//div[@class='resultWrapper']")[0]
+        flight_details = {}
+
+        # --- start scraping ---
+        # price per pax
+        flight_details['price_per_pas'] = ele.find_element_by_css_selector("span.price-text").text
+        # link to book
+        flight_details['booking_link'] = ele.find_element_by_css_selector("a.booking-link").get_attribute("href")
+        # departure
+        departure = ele.find_element_by_css_selector("li[class='flight with-gutter']")
+        flight_details['departure'] = self._get_flight_leg_details(departure)
+        # arrival
+        arrival = ele.find_element_by_css_selector("li[class='flight ']")
+        flight_details['arrival'] = self._get_flight_leg_details(arrival)
+
+        return flight_details
+
+
+# main code
+headless = False
+webdriver_path = "D:/Documents/GitHub/TripPlannerAI/Miscellaneous/chromedriver_win32/chromedriver.exe"
+user_agent = 'Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/60.0.3112.50 Safari/537.36'
+url = 'https://www.kayak.co.uk/flights'
+user = {'departure_city': 'Kota Kinabalu',
+        'departure_country': 'Malaysia',
+        'destination_city': 'Singapore',
+        'destination_country': 'Singapore',
+        'departure_date': '2021-03-25',
+        'return_date': '2021-03-29',
+        'adult': 4,
+        'children': 0,
+        'room': 2,
+        'class': 'premium', # economy, business, premium, first
+        'sort_flight': 'bestflight_a', #bestflight_a, duration_a, price_a
+        'sort_accom': 'rank_a', #distance_a, rank_a, price_a
+      }
+
+try:
+    option = webdriver.ChromeOptions()
+    option.add_argument('window-size=1920x1080')
+    option.add_argument("--start-maximized")
+    option.add_argument('window-size=1920x1080')
+    option.add_argument(f'user-agent={user_agent}')
+    if headless:
+        # make headless undetectable https://intoli.com/blog/making-chrome-headless-undetectable/
+        option.add_argument('headless')
+    driver = webdriver.Chrome(executable_path=webdriver_path, options=option)
+except:
+    raise ValueError("Failed in setting up webdriver. Please check if webdriver is in Miscellaneous folder.")
+
+# initialise object
+kf = KayakFlight(driver)
+
+# scrap flight details
+url = kf.flight_url_builder(user)
+flight_details = kf.scrap_flight_details(url)
+print(flight_details)
+
