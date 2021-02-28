@@ -106,26 +106,36 @@ class KayakFlight(Kayak):
 
         return flight_leg
 
-    def scrap_flight_details(self, url):
+    def scrap_flight_details(self, url, flightlimit=10):
         """Scrap flight details from the url provided"""
         # load driver to the website and give consent
         self.load_wbdriver(url)
 
-        # get the first result
-        ele = self.driver.find_elements_by_xpath("//div[@class='best-flights-list-results']//div[@class='resultWrapper']")[0]
-        flight_details = {}
+        # load more results
+        self.show_more_results(flightlimit, 16)
 
-        # --- start scraping ---
-        # price per pax
-        flight_details['price_per_pas'] = ele.find_element_by_css_selector("span.price-text").text
-        # link to book
-        flight_details['booking_link'] = ele.find_element_by_css_selector("a.booking-link").get_attribute("href")
-        # departure
-        departure = ele.find_element_by_css_selector("li[class='flight with-gutter']")
-        flight_details['departure'] = self._get_flight_leg_details(departure)
-        # arrival
-        arrival = ele.find_element_by_css_selector("li[class='flight ']")
-        flight_details['arrival'] = self._get_flight_leg_details(arrival)
+        # get the results
+        flight_details = []
+
+        for count, ele in enumerate(self.driver.find_elements_by_xpath("//div[@id='searchResultsList']//div[@class='resultWrapper']")):
+            temp_details = {}
+
+            # --- start scraping ---
+            # price per pax
+            temp_details['price_per_pas'] = ele.find_element_by_css_selector("span.price-text").text
+            # link to book
+            temp_details['booking_link'] = ele.find_element_by_css_selector("a.booking-link").get_attribute("href")
+            # departure
+            departure = ele.find_element_by_css_selector("li[class='flight with-gutter']")
+            temp_details['departure'] = self._get_flight_leg_details(departure)
+            # arrival
+            arrival = ele.find_element_by_css_selector("li[class='flight ']")
+            temp_details['arrival'] = self._get_flight_leg_details(arrival)
+
+            flight_details.append(temp_details)
+
+            if count >= flightlimit - 1:
+                break
 
         return flight_details
 
@@ -144,7 +154,7 @@ user = {'departure_city': 'Kota Kinabalu',
         'adult': 4,
         'children': 0,
         'room': 2,
-        'class': 'premium', # economy, business, premium, first
+        'class': 'economy', # economy, business, premium, first
         'sort_flight': 'bestflight_a', #bestflight_a, duration_a, price_a
         'sort_accom': 'rank_a', #distance_a, rank_a, price_a
       }
@@ -167,6 +177,6 @@ kf = KayakFlight(driver)
 
 # scrap flight details
 url = kf.flight_url_builder(user)
-flight_details = kf.scrap_flight_details(url)
+flight_details = kf.scrap_flight_details(url, flightlimit=40)
 print(flight_details)
 

@@ -3,8 +3,7 @@
 import datetime
 import time
 import math
-from selenium.common.exceptions import NoSuchElementException
-from selenium.webdriver.common.action_chains import ActionChains
+from selenium.common.exceptions import NoSuchElementException, ElementNotInteractableException
 
 class Kayak:
     def __init__(self, wbdriver):
@@ -64,8 +63,7 @@ class Kayak:
                 self.driver.find_element_by_css_selector("div[class='resultsListFooter clearfix']").\
                     find_element_by_css_selector("a[class='moreButton']").click()
                 time.sleep(5)
-            except NoSuchElementException:
-                print("failed")
+            except:
                 break
 
         # scroll to top of page
