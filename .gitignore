@@ -6,3 +6,4 @@ __pycache__/
 Data_scraper/output_data
 *.log
 token.pickle
+*.ini
