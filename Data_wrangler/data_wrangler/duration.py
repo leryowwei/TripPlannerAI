@@ -92,8 +92,8 @@ def find_duration_of_loc(loc_dict, nlp):
     # only go through the process if suggested duration not found from tripadvisor
     if loc_dict['suggested_duration'] in ['N/A', None]:
         # access hardcoded duration and find out the priority
-        hardcoded_duration = loc_dict['hardcoded_durations']['duration']
-        priority = loc_dict['hardcoded_durations']['priority']
+        hardcoded_duration = loc_dict['hardcoded_durations_value']
+        priority = loc_dict['hardcoded_durations_priority']
 
         # extract information about duration from tips, reviews, paragraphs and descriptions
         text = form_str([loc_dict['foursquare_description'], loc_dict['paragraph'], loc_dict['combined_reviews_tips']])

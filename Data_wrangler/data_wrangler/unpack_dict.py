@@ -1,7 +1,7 @@
 """This module reads in the location dictionary, unpacks it and extracts the items interested """
 
+import json
 from .utils import logger
-
 
 def unpack_dict(loc_dict):
     """Combine data from google, tripadvisor and API into a standardised dictionary. Only taking the items that we want

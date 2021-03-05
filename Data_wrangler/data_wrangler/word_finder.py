@@ -3,6 +3,7 @@
 """
 from .constants import WORD_FINDER_LABELS
 from .utils import form_str
+import json
 
 
 def wordfinder(preprocessed_para):
@@ -68,7 +69,9 @@ def wordfinder_main(loc_dict, config, textpreprocessor):
         if sum(wordfinder_dic.values()) != 0:
             wordfinder_dic = {k: v / sum(wordfinder_dic.values()) for k, v in wordfinder_dic.items()}
 
-    # assign score to dictionary
-    loc_dict['wordfinder_scores'] = wordfinder_dic
+    # assign scores back to master dict - create one key for one score
+    for label in wordfinder_dic:
+        key = "wordfinder_score_{}".format(label.lower())
+        loc_dict[key] = wordfinder_dic[label]
 
     return loc_dict

@@ -130,13 +130,51 @@ def add_hardcoded_duration(result_dict, venue_categories):
 
     # find out the final duration - max value from the list
     # if high priority exists, take the maximum value from high priority
-    # return as dictionary and set priority to true if it's a high priority place
+    # return the duration and priority level
     if high_priority_dur_list:
-        return {'duration': max(high_priority_dur_list), 'priority': True}
+        return max(high_priority_dur_list),  True
     elif dur_list:
-        return {'duration': max(dur_list), 'priority': False}
+        return max(dur_list), False
     else:
-        return {'duration': None, 'priority': False}
+        return None, False
+
+def unpack_popular_timeframe(result_dict):
+    """Unpacks popular timeframe"""
+
+    # get current dictionary value out and delete the key
+    timeframe = result_dict['popular_timeframes']
+    del result_dict['popular_timeframes']
+
+    # start finding out the data
+    days_in_a_week = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun']
+    popular_time = [[]] * 7
+
+    # if data exists then store popular time into list
+    # TODO: Convert Noon or Midnight to actual discrete timing
+    if timeframe:
+        for ite, item in enumerate(timeframe):
+            # skip the first item
+            if ite > 0:
+                # get the days
+                list_of_days = item['days'].split("–")
+
+                # find out list of popular times
+                list_of_times = []
+                for time in item['open']:
+                    list_of_times.append(time['renderedTime'])
+
+                # store data
+                for day in list_of_days:
+                    # find out which position of list to store
+                    popular_time[days_in_a_week.index(day)] = list_of_times
+
+    # assign popular time back into result dictionary
+    for ite, day in enumerate(days_in_a_week):
+        key = "popular_time_for_{}".format(day.lower())
+        result_dict[key] = popular_time[ite]
+
+    return result_dict
+
 
 def pp_dict(result_dict, venue_categories):
     """Data clean dictionary and post-process the dictionary to add more data like tags, prices, durations etc.
@@ -176,6 +214,9 @@ def pp_dict(result_dict, venue_categories):
     result_dict['tags'] = add_tags(result_dict, venue_categories)
 
     # (6) add hardcoded duration based on tag
-    result_dict['hardcoded_durations'] = add_hardcoded_duration(result_dict, venue_categories)
+    result_dict['hardcoded_durations_value'], result_dict['hardcoded_durations_priority'] = add_hardcoded_duration(result_dict, venue_categories)
+
+    # (7) unpack popular times properly
+    result_dict = unpack_popular_timeframe(result_dict)
 
     return result_dict

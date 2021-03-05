@@ -2,6 +2,7 @@
    multilabel model"""
 
 import numpy as np
+import json
 
 
 def convert_one_hot_encode(results):
@@ -26,37 +27,40 @@ def analyse_text(loc_dict, config, nlp):
         combined_string = "{} {}".format(combined_string, loc_dict['paragraph'])
 
     # run NLP to get mean scores
-    if combined_string != '':
-        sentences = [i for i in nlp(combined_string).sents]
+    # if combined_string != '':
+    sentences = [i for i in nlp(combined_string).sents]
 
-        # form dictionaries
-        score = {}  # to store score from nlp for each sentence
-        mean_score = {}  # to store mean score
+    # form dictionaries
+    score = {}  # to store score from nlp for each sentence
+    mean_score = {}  # to store mean score
 
-        # find out scores given by nlp
-        for x in sentences:
-            x = str(x)
+    # find out scores given by nlp
+    for x in sentences:
+        x = str(x)
 
-            # skip nlp scoring if the string is empty
-            if x != "":
-                docx = nlp(str(x))
-                for key in docx.cats:
-                    if key not in score:
-                        score[key] = []
-                    score[key].append(docx.cats[key])
+        # skip nlp scoring if the string is empty
+        if x != "":
+            docx = nlp(str(x))
+            for key in docx.cats:
+                if key not in score:
+                    score[key] = []
+                score[key].append(docx.cats[key])
 
-        # calculate mean NLP score for each of the categories
-        for key in score:
-            mean_score[key] = np.mean(score[key])
+    # calculate mean NLP score for each of the categories
+    for key in score:
+        mean_score[key] = np.mean(score[key])
 
-        # assign score to dictionary depending on user's specified config
-        if config == 0:
-            # convert to one hot encoding and assign back to dictionary
-            loc_dict['styles_score_nlp'] = convert_one_hot_encode(mean_score)
-        else:
-            # assign raw scores
-            loc_dict['styles_score_nlp'] = mean_score
+    # assign score to dictionary depending on user's specified config
+    if config == 0:
+        # convert to one hot encoding and assign back to dictionary
+        styles_score = convert_one_hot_encode(mean_score)
     else:
-        loc_dict['styles_score_nlp'] = {}
+        # assign raw scores
+        styles_score = mean_score
+
+    # store scores to master dict - one style as one key
+    for style in styles_score:
+        key = "nlp_score_{}".format(style.lower())
+        loc_dict[key] = styles_score[style]
 
     return loc_dict
