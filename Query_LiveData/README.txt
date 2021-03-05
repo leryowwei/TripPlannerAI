@@ -1,0 +1,1 @@
+Requires selenium package, install using 'pip install selenium'

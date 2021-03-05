@@ -5,5 +5,7 @@ __pycache__/
 .google-cookie
 Data_scraper/output_data
 *.log
-token.pickle
+*.pickle
 *.ini
+*.pkl
+*.json
