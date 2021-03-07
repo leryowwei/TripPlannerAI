@@ -22,7 +22,7 @@ def unpack_dict(loc_dict):
 
     # before getting data from tripadvisor and API - pre-define keys to dictionary
     labels = ['suggested_duration', 'tripadvisor_url', 'foursquare_description', 'foursquare_category', 'instagram',
-              'customer_tips_review', 'popular_timeframes']
+              'customer_tips_review', 'popular_timeframes', 'foursquare_hours']
 
     for label in labels:
         result_dict[label] = None
@@ -33,7 +33,7 @@ def unpack_dict(loc_dict):
         result_dict['tripadvisor_url'] = tripadvisor_data['url']
         result_dict['reviews'].extend(tripadvisor_data['reviews'])
 
-    # [4] foursquare detail data: description, category, contacts, customer tips reviews, popular visiting hours,
+    # [4] foursquare detail data: description, category, contacts, customer tips reviews, popular visiting hours, hours,
     # pricing (if google data is empty)
     if api_data:
         api_data = api_data['response']['venue']
@@ -77,6 +77,12 @@ def unpack_dict(loc_dict):
                 result_dict['price'] = api_data['price']['message']
             except KeyError:
                 logger.debug('foursquare price data not found for {}'.format(name))
+
+        # hours (opening hours)
+        try:
+            result_dict['foursquare_hours'] = api_data['hours']['timeframes']
+        except KeyError:
+            logger.debug('foursquare opening hours data not found for {}'.format(name))
 
     return result_dict
 

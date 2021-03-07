@@ -8,6 +8,54 @@ import numpy as np
 import pandas as pd
 from datetime import datetime
 from pathvalidate import sanitize_filename, is_valid_filename
+from .constants import STRING_TO_TIME_MAPPING, TIME_PERIOD
+
+
+def convert_12hr_to_24hr_timerange(x):
+    """Convert 12 hour system range of time to 24 hour system"""
+
+    if not x:
+        return None
+    elif ('CLOSED' in x.upper()) or ('NONE' in x.upper()):
+        return None
+    elif '24 HOURS' in x.upper():
+        return "00:00–24:00"
+    else:
+        modified_time = []
+
+        # split to list
+        range_of_time = x.upper().split("–")
+
+        # only work with a list of two items
+        if len(range_of_time) != 2:
+            raise ValueError("Unable to work with this type of time range format {}".format(x))
+
+        for ite, time in enumerate(range_of_time):
+            # remove all spacing
+            time = time.replace(" ", "")
+
+            # check if it's actual time or phrase like noon or midnight
+            if time in STRING_TO_TIME_MAPPING:
+                modified_time.append(STRING_TO_TIME_MAPPING[time])
+            else:
+                try:
+                    # if AM or PM exists in second item but not first, add that into first item too
+                    if ite == 0:
+                        if not any(period in time for period in TIME_PERIOD) and \
+                                any(period in range_of_time[1] for period in TIME_PERIOD):
+                            time = "{}{}".format(time, range_of_time[1][-2:])
+
+                    # try different methods to strip time (e.g. 3:00PM, 3PM)
+                    try:
+                        temp_time = datetime.strptime(time, "%I:%M%p")
+                    except ValueError:
+                        temp_time = datetime.strptime(time, "%I%p")
+                    modified_time.append(datetime.strftime(temp_time, "%H:%M"))
+
+                except ValueError:
+                    raise ValueError("Unrecognised time {}".format(x))
+
+        return "–".join(modified_time)
 
 
 def find_maxnum_in_str(x):
@@ -134,6 +182,7 @@ def form_str(inp_list):
             else:
                 raise TypeError("Form_str function does not support instances type other than list or str...")
     return para
+
 
 def check_filename(output_file_name):
     """Check filename is valid or not. If invalid, convert the file"""

@@ -1,7 +1,7 @@
 """This module post-processes the location dictionary which has been unpacked """
 
-from .utils import logger
-from .constants import MIN_REVIEW_RATINGS, RESTAURANT_PRICES
+from .utils import logger, convert_12hr_to_24hr_timerange
+from .constants import MIN_REVIEW_RATINGS, RESTAURANT_PRICES, DAYS_IN_A_WEEK
 
 
 def combine_reviews_tips(reviews, tips):
@@ -28,6 +28,7 @@ def combine_reviews_tips(reviews, tips):
     # combine the whole list into one big string and return them
     return ' '.join(combined_string)
 
+
 def reformat_reviews(result_dict):
     # TODO: need to convert date as well - need to think of a way to do that
     for count, review in enumerate(result_dict['reviews']):
@@ -49,6 +50,7 @@ def reformat_reviews(result_dict):
         result_dict['reviews'][count]['ratings'] = rating
     return result_dict
 
+
 def convert_tripadvisor_duration(result_dict):
     """Converts tripadvisor duration from string with range to solid integer number"""
 
@@ -69,6 +71,7 @@ def convert_tripadvisor_duration(result_dict):
             raise ValueError('Trip Advisor duration: {}, not recognised...'.format(duration))
 
     return duration
+
 
 def add_tags(result_dict, venue_categories):
     """Find out the tags that are associated to each location based on their categories"""
@@ -108,6 +111,7 @@ def add_tags(result_dict, venue_categories):
 
     return tags
 
+
 def add_hardcoded_duration(result_dict, venue_categories):
     """Find out the hardcoded duration from the venue categories dataframe based on the tags"""
 
@@ -138,19 +142,18 @@ def add_hardcoded_duration(result_dict, venue_categories):
     else:
         return None, False
 
-def unpack_popular_timeframe(result_dict):
-    """Unpacks popular timeframe"""
+
+def unpack_foursquare_hours(result_dict, key_to_read, key_to_write):
+    """Unpacks foursquare hours"""
 
     # get current dictionary value out and delete the key
-    timeframe = result_dict['popular_timeframes']
-    del result_dict['popular_timeframes']
+    timeframe = result_dict[key_to_read]
+    del result_dict[key_to_read]
 
     # start finding out the data
-    days_in_a_week = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun']
-    popular_time = [[]] * 7
+    reformatted_time = [[]] * 7
 
-    # if data exists then store popular time into list
-    # TODO: Convert Noon or Midnight to actual discrete timing
+    # if data exists then store time into list
     if timeframe:
         for ite, item in enumerate(timeframe):
             # skip the first item
@@ -158,20 +161,45 @@ def unpack_popular_timeframe(result_dict):
                 # get the days
                 list_of_days = item['days'].split("–")
 
-                # find out list of popular times
+                # find out list of times
                 list_of_times = []
                 for time in item['open']:
-                    list_of_times.append(time['renderedTime'])
+                    # convert to 24 hr system before appending to list
+                    list_of_times.append(convert_12hr_to_24hr_timerange(time['renderedTime']))
 
                 # store data
                 for day in list_of_days:
                     # find out which position of list to store
-                    popular_time[days_in_a_week.index(day)] = list_of_times
+                    reformatted_time[DAYS_IN_A_WEEK.index(day)] = list_of_times
 
-    # assign popular time back into result dictionary
-    for ite, day in enumerate(days_in_a_week):
-        key = "popular_time_for_{}".format(day.lower())
-        result_dict[key] = popular_time[ite]
+    # assign time back into result dictionary
+    for ite, day in enumerate(DAYS_IN_A_WEEK):
+        key = "{}_for_{}".format(key_to_write, day.lower())
+        result_dict[key] = reformatted_time[ite]
+
+    return result_dict
+
+
+def unpack_google_hours(result_dict, key_to_read, key_to_write):
+    """Unpacks google hours"""
+
+    # get current dictionary value out and delete the key
+    timeframes = result_dict[key_to_read]
+    del result_dict[key_to_read]
+
+    # start unpacking
+    if timeframes:
+        reformatted_time = [[]] * 7
+        for item in timeframes:
+            temp_list = item.split(",")
+            day, time = temp_list[0:2]
+            # convert to 24 hour system
+            reformatted_time[DAYS_IN_A_WEEK.index(day[0:3])] = convert_12hr_to_24hr_timerange(time)
+
+    # assign time back into result dictionary
+    for ite, day in enumerate(DAYS_IN_A_WEEK):
+        key = "{}_for_{}".format(key_to_write, day.lower())
+        result_dict[key] = reformatted_time[ite]
 
     return result_dict
 
@@ -216,7 +244,15 @@ def pp_dict(result_dict, venue_categories):
     # (6) add hardcoded duration based on tag
     result_dict['hardcoded_durations_value'], result_dict['hardcoded_durations_priority'] = add_hardcoded_duration(result_dict, venue_categories)
 
-    # (7) unpack popular times properly
-    result_dict = unpack_popular_timeframe(result_dict)
+    # (7) unpack popular times properly (this is from foursquare)
+    result_dict = unpack_foursquare_hours(result_dict, "popular_timeframes", "popular_time")
+
+    # (7) unpack opening hours properly (this is either from foursquare or google)
+    if result_dict['hours']:
+        result_dict = unpack_google_hours(result_dict, "hours", "hours")
+        del result_dict['foursquare_hours']
+    else:
+        result_dict = unpack_foursquare_hours(result_dict, "foursquare_hours", "hours")
+        del result_dict['hours']
 
     return result_dict

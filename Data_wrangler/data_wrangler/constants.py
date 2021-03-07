@@ -68,3 +68,10 @@ MIN_REVIEW_RATINGS = 30
 
 DURATION_KEYWORDS = ['spend', 'spent', 'took']
 FILTER_KEYWORDS = ['queue', 'wait']
+TIME_PERIOD = ['AM', 'PM']
+
+# 24 hour system
+STRING_TO_TIME_MAPPING = {'NOON': '12:00', 'MIDNIGHT': '24:00', 'MORNING': '09:00',
+                          'EVENING': '19:00', 'CLOSED': None, 'NONE': None}
+
+DAYS_IN_A_WEEK = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun']
