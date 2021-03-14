@@ -3,13 +3,28 @@
 import datetime
 import time
 import math
-from selenium.common.exceptions import NoSuchElementException, ElementNotInteractableException
+from selenium import webdriver
 
 class Kayak:
-    def __init__(self, wbdriver):
+    def __init__(self, headless=False):
         """Build kayak scraper base class and contain methods that can be shared with child classes"""
-        # assign values first
-        self.driver = wbdriver
+
+        # set up webdriver object
+        self.webdriver_path = "D:/Documents/GitHub/TripPlannerAI/Miscellaneous/chromedriver_win32/chromedriver.exe"
+        self.user_agent = 'Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/60.0.3112.50 Safari/537.36'
+        try:
+            option = webdriver.ChromeOptions()
+            option.add_argument('window-size=1920x1080')
+            option.add_argument("--start-maximized")
+            option.add_argument(f'user-agent={self.user_agent}')
+            if headless:
+                # make headless undetectable https://intoli.com/blog/making-chrome-headless-undetectable/
+                option.add_argument('headless')
+            self.driver = webdriver.Chrome(executable_path=self.webdriver_path, options=option)
+        except:
+            raise ValueError("Failed in setting up webdriver. Please check if webdriver is in Miscellaneous folder.")
+
+        # assign base url
         self.base_url = 'https://www.kayak.co.uk'
 
     def _give_consent(self):

@@ -7,10 +7,10 @@ from kayak import Kayak
 
 
 class KayakAccom(Kayak):
-    def __init__(self, wbdriver):
+    def __init__(self, headless=True):
         """Build kayak scraper class for accomodation"""
         # inherit from parent class
-        super().__init__(wbdriver)
+        super().__init__(headless)
 
     @staticmethod
     def _useraccom_default():

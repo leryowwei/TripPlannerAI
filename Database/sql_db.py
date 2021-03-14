@@ -65,3 +65,7 @@ class Database:
     def read_df_from_sql(self, db_name):
         """Saves the whole dataframe from sql"""
         return pd.read_sql_table(db_name, self.engine)
+
+db = Database()
+db.connect()
+df_sg = db.read_df_from_sql("sg_locdb_050321")

@@ -3,7 +3,6 @@
 import pandas as pd
 from kayak import Kayak
 
-
 class KayakFlight(Kayak):
     def __init__(self, wbdriver):
         """Build kayak scraper class for flights"""

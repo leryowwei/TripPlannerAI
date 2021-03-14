@@ -1,0 +1,16 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Flight Information</title>
+    {% load django_tables2 %}
+</head>
+<body>
+<article>
+  <header>
+      <h1>Flight Information</h1>
+      {% render_table flightinfo %}
+  </header>
+</article>
+</body>
+</html>
