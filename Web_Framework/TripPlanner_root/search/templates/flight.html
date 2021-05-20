@@ -2,15 +2,51 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
+    {% load static %}
     <title>Flight Information</title>
-    {% load django_tables2 %}
 </head>
 <body>
-<article>
-  <header>
-      <h1>Flight Information</h1>
-      {% render_table flightinfo %}
-  </header>
-</article>
+<link rel="stylesheet" href="{% static 'style_flight.css' %}">
+<h1>Flights</h1>
+<h2>Choose the flight you prefer!</h2>
+{% for flight in flight_list %}
+<div class="title">
+    <h3> Choice {{ forloop.counter0|add:"1" }}: </h3>
+</div>
+<table class="flightDeparture">
+  <tbody>
+    <tr>
+      <td rowspan="2">{{ flight.departure_carrier }}</td>
+      <td>{{ flight.departure_depart_time }} - {{ flight.departure_arrival_time }}</td>
+      <td>{{ flight.departure_stop_number }}</td>
+      <td>{{ flight.departure_duration }}</td>
+      <td rowspan="2">{{ flight.price_per_pas }}</td>
+    </tr>
+    <tr>
+      <td>{{ flight.departure_depart_airport }} - {{ flight.departure_arrival_airport }}</td>
+      <td>{{ flight.departure_layovers }}</td>
+      <td></td>
+    </tr>
+  </tbody>
+</table>
+<table class="flightArrival">
+  <tbody>
+    <tr>
+      <td rowspan="2">{{ flight.arrival_carrier }}</td>
+      <td>{{ flight.arrival_depart_time }} - {{ flight.arrival_arrival_time }}</td>
+      <td>{{ flight.arrival_stop_number }}</td>
+      <td>{{ flight.arrival_duration }}</td>
+      <td><a type="button" class="btn info" href={{ flight.booking_link }}>View Deal</a></td>
+    </tr>
+    <tr>
+      <td>{{ flight.arrival_depart_airport }} - {{ flight.arrival_arrival_airport }}</td>
+      <td>{{ flight.arrival_layovers }}</td>
+      <td></td>
+      <td><a type="button" class="btn btn-info btn-sm" href="{% url 'accom' flight.user_id flight.id %}">Select this flight</a></td>
+    </tr>
+  </tbody>
+</table>
+<hr>
+{% endfor %}
 </body>
 </html>

@@ -12,6 +12,7 @@ class UserForm(forms.ModelForm):
             'departure_date': DatePickerInput(format='%Y-%m-%d'), # specify date-frmat
             'return_date': DatePickerInput(format='%Y-%m-%d'), # specify date-frmat
         }
+        exclude = ("flight_id", "accom_id",)
 
     def clean(self):
         """Clean data and raise error if results are invalid"""

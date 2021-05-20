@@ -56,6 +56,24 @@ class Kayak:
         else:
             raise ValueError("Inbound and outbound dates cannot be empty.")
 
+    @staticmethod
+    def _convert_db_row_to_dict(db_info, colnames):
+        """Convert a single row from sql database to dictionary"""
+        tmp_dict = {}
+        if db_info:
+            for ite, col in enumerate(colnames):
+                tmp_dict[col[0]] = db_info[ite]
+        return tmp_dict
+
+    @staticmethod
+    def _convert_dict_to_db_cmd(tmp_dict, colnames):
+        """Convert dictionary to a row of values to write back to sql"""
+        x = ""
+        for col in colnames:
+            x += "'{}',".format(tmp_dict[col[0]])
+        print(x)
+        return x
+
     def load_wbdriver(self, url):
         """Load webdriver object based on url provided"""
 

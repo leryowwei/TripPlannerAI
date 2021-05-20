@@ -2,6 +2,7 @@
 
 import pandas as pd
 from .kayak import Kayak
+from selenium.common.exceptions import NoSuchElementException
 
 class KayakFlight(Kayak):
     def __init__(self, headless=True):
@@ -25,10 +26,6 @@ class KayakFlight(Kayak):
                                    self.get_iata_code(user.get_str_destination_city()))
 
         # (2) Dates
-        # check if date given is valid - got specific format
-        #self._validate_date(user.departure_date)
-        #self._validate_date(user.return_date)
-        # error will be raised - so if we reach this point means no error
         dates = "{}/{}".format(user.departure_date, user.return_date)
 
         # (3) number of people - adult and children
@@ -61,44 +58,76 @@ class KayakFlight(Kayak):
         return url
 
     @staticmethod
-    def _get_flight_leg_details(element):
+    def _get_flight_leg_details(element, journey):
         """Get detail information of the leg of flight"""
 
         flight_leg = {}
 
         # get depart and arrival time
         try:
-            flight_leg['depart_time'] = element.find_element_by_css_selector("span[class='depart-time base-time']").text
-            flight_leg['arrival_time'] = element.find_element_by_css_selector("span[class='arrival-time base-time']").text
-        except:
-            pass
+            flight_leg['{}_depart_time'.format(journey)] = element.find_element_by_css_selector("div[class='section times']").\
+                find_element_by_css_selector("span[class='depart-time base-time']").text
+            flight_leg['{}_arrival_time'.format(journey)] = element.find_element_by_css_selector("div[class='section times']").\
+                find_element_by_css_selector("span[class='arrival-time base-time']").text
+        except NoSuchElementException:
+            flight_leg['{}_depart_time'.format(journey)] = ""
+            flight_leg['{}_arrival_time'.format(journey)] = ""
 
         # find out section stop details
         try:
-            flight_leg['stop_number'] = element.find_element_by_css_selector("span[class^='stops-text']").text
-            flight_leg['layovers'] = element.find_element_by_css_selector("span[class='js-layover']").text
-        except:
-            pass
+            # see direct flight exists
+            flight_leg['{}_stop_number'.format(journey)] = element.find_element_by_css_selector("div[class='section stops']").\
+                find_element_by_css_selector("span[class='stops-text']").text
+            flight_leg['{}_layovers'.format(journey)] = ""
+        except NoSuchElementException:
+            try:
+                flight_leg['{}_stop_number'.format(journey)] = element.find_element_by_css_selector("div[class='section stops']").\
+                    find_element_by_css_selector("span[class^='stops-text']").text
+                flight_leg['{}_layovers'.format(journey)] =  element.find_element_by_css_selector("div[class='section stops']").\
+                    find_element_by_css_selector("span[class='js-layover']").text
+            except NoSuchElementException:
+                flight_leg['{}_stop_number'.format(journey)] = ""
+                flight_leg['{}_layovers'.format(journey)] = ""
 
         # find out duration
         try:
             duration = element.find_element_by_css_selector("div[class='section duration allow-multi-modal-icons']").\
                 find_element_by_css_selector("div[class='top']").text
-            flight_leg['duration'] = duration
-        except:
-            pass
+            flight_leg['{}_duration'.format(journey)] = duration
+        except NoSuchElementException:
+            flight_leg['{}_duration'.format(journey)] = ""
 
-        # find out carriers (might have more than 1)
+        # find out carriers and logos (might have more than 1)
         try:
-            flight_leg['carrier'] = []
+            tmp_carrier_names = []
+            tmp_carrier_logos = []
             carriers = element.find_element_by_css_selector("div[class='section stacked-carriers']").\
                 find_elements_by_css_selector("div[class='leg-carrier']")
             for ele in carriers:
                 ele = ele.find_element_by_css_selector("img")
                 # remove the word logo
-                flight_leg['carrier'].append(ele.get_attribute('alt')[:-5])
-        except:
-            pass
+                tmp_carrier_names.append(ele.get_attribute('alt')[:-5])
+                tmp_carrier_logos.append(ele.get_attribute('src'))
+            flight_leg['{}_carrier'.format(journey)] = ",".join(tmp_carrier_names)
+            flight_leg['{}_logo_url'.format(journey)] = tmp_carrier_logos
+        except NoSuchElementException:
+            flight_leg['{}_carrier'.format(journey)] = ""
+            flight_leg['{}_logo_url'.format(journey)] = []
+
+        # find out airports
+        try:
+            airports = element.find_element_by_css_selector("div[class='section times']").\
+                find_elements_by_css_selector("span[class='airport-name']")
+
+            # check if airport not two elements
+            if len(airports) != 2:
+                raise ValueError("Number of airports not two for {}".format(airports))
+
+            flight_leg['{}_depart_airport'.format(journey)] = airports[0].text
+            flight_leg['{}_arrival_airport'.format(journey)] = airports[1].text
+        except NoSuchElementException:
+            flight_leg['{}_depart_airport'.format(journey)] = ""
+            flight_leg['{}_arrival_airport'.format(journey)] = ""
 
         return flight_leg
 
@@ -125,10 +154,10 @@ class KayakFlight(Kayak):
             temp_details['booking_link'] = ele.find_element_by_css_selector("a.booking-link").get_attribute("href")
             # departure
             departure = ele.find_element_by_css_selector("li[class='flight with-gutter']")
-            temp_details['departure'] = self._get_flight_leg_details(departure)
+            temp_details.update(self._get_flight_leg_details(departure, 'departure'))
             # arrival
             arrival = ele.find_element_by_css_selector("li[class='flight ']")
-            temp_details['arrival'] = self._get_flight_leg_details(arrival)
+            temp_details.update(self._get_flight_leg_details(arrival, 'arrival'))
 
             flight_details.append(temp_details)
 

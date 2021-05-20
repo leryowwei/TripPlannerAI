@@ -1,0 +1,23 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Trip Planner Home Page</title>
+    {% load bootstrap4 %}       {# import bootstrap4/bootstrap3 #}
+    {% bootstrap_css %}         {# Embed Bootstrap CSS #}
+    {% bootstrap_javascript jquery='full' %}  {# Embed Bootstrap JS+jQuery #}
+    {{ form.media  }}
+</head>
+<body>
+<article>
+  <header>
+      <h1>Travelution - Trip planning using AI</h1>
+      <p>Please fill in the blanks below to start planning your trip!</p>
+  </header>
+</article>
+<form method="post">{% csrf_token %}
+{% bootstrap_form form %}
+<input type="submit" value="Save">
+</form>
+</body>
+</html>

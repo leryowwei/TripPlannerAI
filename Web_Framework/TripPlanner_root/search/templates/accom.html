@@ -1,0 +1,35 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Accommodation Page</title>
+</head>
+<body>
+<link rel="stylesheet" href="{% static 'style_accom.css' %}">
+{% block content %}
+<h1>Accommodations</h1>
+<h2>Choose the accommodation you prefer!</h2>
+{% for accom in accom_list %}
+<hr>
+<div class="title">
+    <h3> Choice {{ forloop.counter0|add:"1" }}: {{ accom.hotel_name }} </h3>
+    <a type="button" class="btn info" href={{ accom.website }}>More Information</a>
+    <a type="button" class="btn select" href="{% url 'itinerary' accom.user_id accom.id %}">Select this accommodation</a>
+</div>
+<h4>Address: {{ accom.address }} | Phone: {{ accom.phone_number }} </h4>
+<p>Accommodation price: {{ accom.price }} [{{ user.get_no_of_nights}} Night(s)] | Stars: {{ accom.stars }} | Ratings: {{ accom.rating }}</p>
+<p>Check-in: {{ accom.check_in }} | Check-out: {{ accom.check_out }}</p>
+<p>Description: {{ accom.description }}</p>
+<div class="container">
+    {% for url in accom.images_url %}
+    <div class="column">
+        <img src={{ url }} alt="Hotel" style="height:100%" onerror="this.style.visibility = 'hidden'">
+    </div>
+    {% endfor %}
+</div>
+{% endfor %}
+{% endblock %}
+</body>
+</html>
+

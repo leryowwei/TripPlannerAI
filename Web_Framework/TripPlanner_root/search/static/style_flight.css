@@ -1,0 +1,60 @@
+@import url('https://fonts.googleapis.com/css?family=Josefin+Sans:400,400i,600,600i');
+html,body{
+  margin:0.75%;
+  height:120%;
+  font-family: 'Josefin Sans', sans-serif;
+  background-colour: white;
+}
+
+Table {
+  border: 1px solid black;
+  height: 100px;
+  width: 80%;
+  border-collapse: collapse;
+  text-align: center;
+}
+Table td:nth-child(1) {
+  width: 200px;
+  }
+
+Table td:nth-child(2) {
+  width: 200px;
+}
+
+Table td:nth-child(3) {
+  width: 100px;
+ }
+
+Table td:nth-child(4) {
+  width: 100px;
+ }
+
+Table td:nth-child(5) {
+  width: 300px;
+ }
+
+Table tr:nth-child(3) {
+  border: 1px solid black;
+ }
+
+
+.btn {background-image: linear-gradient(to right, #606c88 0%, #3f4c6b  51%, #606c88  100%)}
+
+.btn {
+    margin: 10px;
+    padding: 8px 20px;
+    text-align: center;
+    text-transform: uppercase;
+    transition: 0.5s;
+    background-size: 200% auto;
+    color: white;
+    box-shadow: 0 0 20px #eee;
+    border-radius: 10px;
+    text-decoration: none;
+}
+
+.btn:hover {
+    background-position: right center; /* change the direction of the change here */
+    color: #fff;
+    text-decoration: none;
+}
